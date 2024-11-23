@@ -43,6 +43,18 @@ typedef char benchlab_char;
 #define LIBBENCHLAB_ENUM_SCOPE(scope, field) scope##_##field
 #endif /* defined(__cplusplus) */
 
+//#if defined(__cplusplus)
+//#define LIBBENCHLAB_BEGIN_TYPED_ENUM(name, type) enum class name : type {
+//#define LIBBENCHLAB_TYPED_ENUM_VALUE(name, value) name = value,
+//#define LIBBENCHLAB_END_TYPED_ENUM(name, type) };
+//#else /* defined(__cplusplus) */
+//#define LIBBENCHLAB_BEGIN_TYPED_ENUM(name, type) typedef type name;
+//#define LIBBENCHLAB_TYPED_ENUM_VALUE(name, value) name = value,
+//#define LIBBENCHLAB_END_TYPED_ENUM(name, type)
+//#endif /* defined(__cplusplus) */
+
+typedef int hugo;
+
 
 /// <summary>
 /// The opaque type used to represent a Benchlab device.
