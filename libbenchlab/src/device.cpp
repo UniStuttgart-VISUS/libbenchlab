@@ -6,7 +6,6 @@
 
 #include "device.h"
 
-#include <cassert>
 #include <cerrno>
 
 
@@ -15,6 +14,7 @@
  */
 benchlab_device::benchlab_device(void) noexcept
         : _handle(invalid_handle),
+        _timeout(0),
         _version(0) { }
 
 
@@ -42,6 +42,51 @@ HRESULT benchlab_device::close(void) noexcept {
 
     this->_handle = invalid_handle;
     return retval;
+}
+
+
+/*
+ * benchlab_device::name
+ */
+HRESULT benchlab_device::name(_Out_ std::vector<char>& name) const noexcept {
+    auto hr = this->check_handle();
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = this->write(command::read_name);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    name.resize(32);
+    hr = this->read(name, this->_timeout);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // Erase the padding at the end.
+    const auto end = std::find(name.begin(), name.end(), '\0');
+    name.erase(end, name.end());
+
+    return S_OK;
+}
+
+
+/*
+ * benchlab_device::name
+ */
+HRESULT benchlab_device::name(_In_ const std::string& name) noexcept {
+    std::array<char, 32> parameter { 0 };
+
+    // Make sure that we have exactly 32 ASCII characters to send to the device.
+    if (name.size() > parameter.size()) {
+        std::copy_n(name.begin(), parameter.size(), parameter.begin());
+    } else {
+        std::copy(name.begin(), name.end(), parameter.begin());
+    }
+
+    return this->write(command::write_name, parameter.data(), parameter.size());
 }
 
 
@@ -87,6 +132,49 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         dcb.StopBits = static_cast<BYTE>(config->stop_bits);
         // TODO
 
+#if false
+        {
+            Debug.Assert(!(value < Handshake.None || value > Handshake.RequestToSendXOnXOff),
+                "An invalid value was passed to Handshake");
+
+            if (value != _handshake) {
+                // in the DCB, handshake affects the fRtsControl, fOutxCtsFlow, and fInX, fOutX fields,
+                // so we must save everything in that closure before making any changes.
+                Handshake handshakeOld = _handshake;
+                int fInOutXOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FINX);
+                int fOutxCtsFlowOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW);
+                int fRtsControlOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL);
+
+                _handshake = value;
+                int fInXOutXFlag = (_handshake == Handshake.XOnXOff || _handshake == Handshake.RequestToSendXOnXOff) ? 1 : 0;
+                SetDcbFlag(Interop.Kernel32.DCBFlags.FINX, fInXOutXFlag);
+                SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTX, fInXOutXFlag);
+
+                SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW, (_handshake == Handshake.RequestToSend ||
+                    _handshake == Handshake.RequestToSendXOnXOff) ? 1 : 0);
+
+                if ((_handshake == Handshake.RequestToSend ||
+                    _handshake == Handshake.RequestToSendXOnXOff)) {
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_HANDSHAKE);
+                } else if (_rtsEnable) {
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_ENABLE);
+                } else {
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_DISABLE);
+                }
+
+                if (Interop.Kernel32.SetCommState(_handle, ref _dcb) == false) {
+                    _handshake = handshakeOld;
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FINX, fInOutXOld);
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTX, fInOutXOld);
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW, fOutxCtsFlowOld);
+                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, fRtsControlOld);
+                    throw Win32Marshal.GetExceptionForLastWin32Error();
+                }
+
+    }
+}
+#endif
+
         if (!::SetCommState(this->_handle, &dcb)) {
             auto retval = HRESULT_FROM_WIN32(::GetLastError());
             //_powenetics_debug("Updating state of COM port failed.\r\n");
@@ -112,6 +200,50 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
             return hr;
         }
     }
+
+    return S_OK;
+}
+
+
+/*
+ * benchlab_device::uid
+ */
+HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
+    auto hr = this->check_handle();
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = this->write(command::read_uid);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    std::array<std::uint8_t, 12> response;
+    hr = this->read(response, this->_timeout);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // TODO
+    //byte[] txBuffer = ToByteArray(UART_CMD.UART_CMD_READ_UID);
+    //if (!SendCommand(txBuffer, out byte[] rxBuffer, 12)) {
+    //    return false;
+    //}
+
+    //byte[] guidBuffer = new byte[16];
+    //Array.Copy(rxBuffer, 0, guidBuffer, 0, 12);
+    return S_OK;
+}
+
+
+/*
+ * benchlab_device::check_handle
+ */
+HRESULT benchlab_device::check_handle(void) const noexcept {
+    return (this->_handle != invalid_handle)
+        ? S_OK
+        : HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE);
 }
 
 

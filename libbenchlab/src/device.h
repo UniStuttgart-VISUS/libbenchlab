@@ -5,10 +5,13 @@
 // <author>Christoph Müller</author>
 
 #include <array>
+#include <cassert>
 #include <chrono>
 #include <cinttypes>
 #include <cstddef>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "libbenchlab/serial.h"
 #include "libbenchlab/types.h"
@@ -23,6 +26,11 @@ struct LIBBENCHLAB_TEST_API benchlab_device final {
 
 public:
 
+    /// <summary>
+    /// The type of the unique device ID.
+    /// </summary>
+    typedef GUID uid_type;
+
     benchlab_device(void) noexcept;
 
     ~benchlab_device(void) noexcept;
@@ -33,11 +41,26 @@ public:
     HRESULT close(void) noexcept;
 
     /// <summary>
+    /// Gets the user-defined friendly name of the device.
+    /// </summary>
+    HRESULT name(_Out_ std::vector<char>& name) const noexcept;
+
+    /// <summary>
+    /// Updates the user-defined friendly name of the device.
+    /// </summary>
+    HRESULT name(_In_ const std::string& name) noexcept;
+
+    /// <summary>
     /// Opens and configures the specified COM port if the device has not
     /// yet been opened.
     /// </summary>
     HRESULT open(_In_z_ const benchlab_char *com_port,
         _In_ const benchlab_serial_configuration *config) noexcept;
+
+    /// <summary>
+    /// Gets the unique ID of the device.
+    /// </summary>
+    HRESULT uid(_Out_ uid_type& uid) const noexcept;
 
 private:
 
@@ -70,6 +93,12 @@ private:
 #else /* defined(_WIN32) */
     static constexpr handle_type invalid_handle = -1;
 #endif /* defined(_WIN32) */
+
+    /// <summary>
+    /// Check whether <see cref="_handle" /> is valid.
+    /// </summary>
+    /// <returns></returns>
+    HRESULT check_handle(void) const noexcept;
 
     /// <summary>
     /// Requests the vendor data that include the version of the hardware and
@@ -132,15 +161,38 @@ private:
     /// This method must not be called while the device is streaming. Only
     /// the streaming thread within the object may read at this point.
     /// </remarks>
-    /// <typeparam name="TType"></typeparam>
-    /// <typeparam name="Size"></typeparam>
-    /// <param name="dst"></param>
-    /// <param name="timeout"></param>
+    /// <typeparam name="TType">The type of data to be retrieved.</typeparam>
+    /// <typeparam name="Size">The number of elements to be retrieved.
+    /// </typeparam>
+    /// <param name="dst">Receives the data from the COM port.</param>
+    /// <param name="timeout">The timeout after which the operation will
+    /// fail if it could not read all requested elements.</param>
     /// <returns><c>S_OK</c> in case of success, an error code otherwise.
     /// </returns>
     template<class TType, std::size_t Size>
     inline HRESULT read(_Out_ std::array<TType, Size>& dst,
             _In_ const std::chrono::milliseconds timeout) const noexcept {
+        return this->read(dst.data(), sizeof(TType) * dst.size(), timeout);
+    }
+
+    /// <summary>
+    /// Reads all of <paramref name="dst" /> from the serial port or fails
+    /// after <paramref name="timeout" /> milliseconds.
+    /// </summary>
+    /// <remarks>
+    /// This method must not be called while the device is streaming. Only
+    /// the streaming thread within the object may read at this point.
+    /// </remarks>
+    /// <typeparam name="TType">The type of data to be retrieved.</typeparam>
+    /// <param name="dst">Receives the data from the COM port.</param>
+    /// <param name="timeout">The timeout after which the operation will
+    /// fail if it could not read all requested elements.</param>
+    /// <returns><c>S_OK</c> in case of success, an error code otherwise.
+    /// </returns>
+    template<class TType>
+    inline HRESULT read(_Inout_ std::vector<TType>& dst,
+            _In_ const std::chrono::milliseconds timeout) const noexcept {
+        assert(!dst.empty());
         return this->read(dst.data(), sizeof(TType) * dst.size(), timeout);
     }
 
