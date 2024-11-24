@@ -57,8 +57,6 @@ typedef char benchlab_char;
 //#define LIBBENCHLAB_END_TYPED_ENUM(name, type)
 //#endif /* defined(__cplusplus) */
 
-typedef int hugo;
-
 
 /// <summary>
 /// The opaque type used to represent a Benchlab device.
@@ -107,6 +105,7 @@ enum class benchlab_fan_mode : std::uint8_t {
 #define benchlab_fan_mode_extended ((benchlab_fan_mode) 2);
 #endif /* defined(__cplusplus) */
 
+
 #if defined(__cplusplus)
 enum class benchlab_fan_stop : std::uint8_t {
     off = 0,
@@ -117,6 +116,7 @@ enum class benchlab_fan_stop : std::uint8_t {
 #define benchlab_fan_stop_off ((benchlab_fan_stop) 0);
 #define benchlab_fan_stop_on ((benchlab_fan_stop) 1);
 #endif /* defined(__cplusplus) */
+
 
 #if defined(__cplusplus)
 enum class benchlab_fan_switch_status : std::uint8_t {
