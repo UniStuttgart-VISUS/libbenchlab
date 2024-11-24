@@ -187,9 +187,8 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
             cto.WriteTotalTimeoutConstant = 0;
         }
 
-        auto hr = ::SetCommTimeouts(this->_handle, &cto);
-        if (FAILED(hr)) {
-            return hr;
+        if (!::SetCommTimeouts(this->_handle, &cto)) {
+            return HRESULT_FROM_WIN32(::GetLastError());
         }
     }
 #else /* defined(_WIN32) */
@@ -278,7 +277,6 @@ HRESULT benchlab_device::check_handle(void) const noexcept {
  * benchlab_device::check_vendor_data
  */
 HRESULT benchlab_device::check_vendor_data(void) noexcept {
-
     auto hr = this->write(command::read_vendor_data);
     if (FAILED(hr)) {
         return hr;
@@ -290,7 +288,8 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
         return hr;
     }
 
-    if ((response[0] != 0xee) || (response[1] != 0x10)) {
+    if ((response[0] != BENCHLAB_VENDOR_ID)
+            || (response[1] != BENCHLAB_PRODUCT_ID)) {
         return E_NOTIMPL;
     }
 

@@ -6,6 +6,10 @@
 
 #pragma once
 
+#if defined(__cplusplus)
+#include <cinttypes>
+#endif /* defined(__cplusplus) */
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -77,64 +81,118 @@ typedef struct benchlab_device *benchlab_handle;
 
 
 #if defined(__cplusplus)
-enum class fan_mode : uint8_t {
+enum class benchlab_button : std::uint8_t {
+    power = 0,
+    reset,
+    other
+};
+#else /* defined(__cplusplus) */
+#define benchlab_button uint8_t
+#define benchlab_button_power ((benchlab_button) 0);
+#define benchlab_button_reset ((benchlab_button) 1);
+#define benchlab_button_other ((benchlab_button) 2);
+#endif /* defined(__cplusplus) */
+
+
+#if defined(__cplusplus)
+enum class benchlab_fan_mode : std::uint8_t {
     temperature_control = 0,
     fixed,
     extended,
 };
-
 #else /* defined(__cplusplus) */
-#define fan_mode uint8_t
-#define fan_mode_temperature_control ((fan_mode) 0);
-#define fan_mode_fixed ((fan_mode) 1);
-#define fan_mode_extended ((fan_mode) 2);
+#define benchlab_fan_mode uint8_t
+#define benchlab_fan_mode_temperature_control ((benchlab_fan_mode) 0);
+#define benchlab_fan_mode_fixed ((benchlab_fan_mode) 1);
+#define benchlab_fan_mode_extended ((benchlab_fan_mode) 2);
 #endif /* defined(__cplusplus) */
 
-
-//typedef enum LIBBENCHLAB_ENUM fan_stop_t : uint8_t {
-//    LIBBENCHLAB_ENUM_SCOPE(fan_stop, off) = 0,
-//    LIBBENCHLAB_ENUM_SCOPE(fan_stop, on),
-//} fan_stop;
-
+#if defined(__cplusplus)
+enum class benchlab_fan_stop : std::uint8_t {
+    off = 0,
+    on
+};
+#else /* defined(__cplusplus) */
+#define benchlab_fan_stop uint8_t
+#define benchlab_fan_stop_off ((benchlab_fan_stop) 0);
+#define benchlab_fan_stop_on ((benchlab_fan_stop) 1);
+#endif /* defined(__cplusplus) */
 
 #if defined(__cplusplus)
-enum class fan_switch_status : uint8_t {
+enum class benchlab_fan_switch_status : std::uint8_t {
     automatic = 0,
     half,
     full,
 };
-
 #else /* defined(__cplusplus) */
-#define fan_switch_status uint8_t
-#define fan_switch_status_automatic ((fan_switch_status) 0);
-#define fan_switch_status_half ((fan_switch_status) 1);
-#define fan_switch_status_full ((fan_switch_status) 2);
+#define benchlab_fan_switch_status uint8_t
+#define benchlab_fan_switch_status_automatic ((benchlab_fan_switch_status) 0);
+#define benchlab_fan_switch_status_half ((benchlab_fan_switch_status) 1);
+#define benchlab_fan_switch_status_full ((benchlab_fan_switch_status) 2);
 #endif /* defined(__cplusplus) */
 
 
 #if defined(__cplusplus)
-enum class rgb_switch_status : uint8_t {
-    work = 0,
-    play
+enum class benchlab_rgb_direction : std::uint8_t {
+    clockwise = 0,
+    anti_clockwise
 };
-
 #else /* defined(__cplusplus) */
-#define rgb_switch_status uint8_t
-#define rgb_switch_status_work ((rgb_switch_status) 0);
-#define rgb_switch_status_play ((rgb_switch_status) 1);
+#define benchlab_rgb_direction uint8_t
+#define benchlab_rgb_direction_clockwise ((benchlab_rgb_direction) 0);
+#define benchlab_rgb_direction_anti_clockwise ((benchlab_rgb_direction) 1);
 #endif /* defined(__cplusplus) */
 
 
 #if defined(__cplusplus)
-enum class rgb_extended_status : uint8_t {
+enum class benchlab_rgb_extended_status : std::uint8_t {
     not_detected = 0,
     detected
 };
-
 #else /* defined(__cplusplus) */
-#define rgb_extended_status uint8_t
-#define rgb_extended_status_not_detected ((rgb_extended_status) 0);
-#define rgb_extended_status_detected ((rgb_extended_status) 1);
+#define benchlab_rgb_extended_status uint8_t
+#define benchlab_rgb_extended_status_not_detected ((benchlab_rgb_extended_status) 0);
+#define benchlab_rgb_extended_status_detected ((benchlab_rgb_extended_status) 1);
+#endif /* defined(__cplusplus) */
+
+
+#if defined(__cplusplus)
+enum class benchlab_rgb_mode : std::uint8_t {
+    rainbow_cycle = 0,
+    rainbow_colour_chase,
+    rainbow,
+    twinkle,
+    meteor_shower,
+    colour_wipe,
+    theatre_chase,
+    fade_in_out,
+    single_colour_chase,
+    single_colour
+};
+#else /* defined(__cplusplus) */
+#define benchlab_rgb_mode uint8_t
+#define benchlab_rgb_mode_rainbow_cycle ((benchlab_rgb_mode) 0);
+#define benchlab_rgb_mode_rainbow_colour_chase ((benchlab_rgb_mode) 1);
+#define benchlab_rgb_mode_rainbow ((benchlab_rgb_mode) 2);
+#define benchlab_rgb_mode_twinkle ((benchlab_rgb_mode) 3);
+#define benchlab_rgb_mode_meteor_shower ((benchlab_rgb_mode) 4);
+#define benchlab_rgb_mode_colour_wipe ((benchlab_rgb_mode) 5);
+#define benchlab_rgb_mode_theatre_chase ((benchlab_rgb_mode) 6);
+#define benchlab_rgb_mode_fade_in_out ((benchlab_rgb_mode) 7);
+#define benchlab_rgb_mode_single_colour_chase ((benchlab_rgb_mode) 8);
+#define benchlab_rgb_mode_single_colour ((benchlab_rgb_mode) 9);
+#endif /* defined(__cplusplus) */
+
+
+#if defined(__cplusplus)
+enum class benchlab_rgb_switch_status : std::uint8_t {
+    work = 0,
+    play
+};
+#else /* defined(__cplusplus) */
+#define benchlab_rgb_switch_status uint8_t
+#define benchlab_rgb_switch_status_work ((benchlab_rgb_switch_status) 0);
+#define benchlab_rgb_switch_status_play ((benchlab_rgb_switch_status) 1);
 #endif /* defined(__cplusplus) */
 
 
@@ -146,47 +204,7 @@ enum class rgb_extended_status : uint8_t {
 //    TEMP_SRC_TS4,
 //    TEMP_SRC_TAMB
 //};
-//
-//
-//
-//
 
-//
-//private enum UART_CMD : byte {
-//    UART_CMD_WELCOME,
-//    UART_CMD_READ_SENSORS,
-//    UART_CMD_ACTION,
-//    UART_CMD_READ_NAME,
-//    UART_CMD_WRITE_NAME,
-//    UART_CMD_READ_FAN_PROFILE,
-//    UART_CMD_WRITE_FAN_PROFILE,
-//    UART_CMD_READ_RGB,
-//    UART_CMD_WRITE_RGB,
-//    UART_CMD_READ_CALIBRATION,
-//    UART_CMD_WRITE_CALIBRATION,
-//    UART_CMD_LOAD_CALIBRATION,
-//    UART_CMD_STORE_CALIBRATION,
-//    UART_CMD_READ_UID,
-//    UART_CMD_READ_VENDOR_DATA,
-//}
-//
-//public enum RGB_MODE : byte {
-//    RGB_MODE_RAINBOW_CYCLE,
-//    RGB_MODE_RAINBOW_COLOR_CHASE,
-//    RGB_MODE_RAINBOW,
-//    RGB_MODE_TWINKLE,
-//    RGB_MODE_METEOR_SHOWER,
-//    RGB_MODE_COLOR_WIPE,
-//    RGB_MODE_THEATRE_CHASE,
-//    RGB_MODE_FADE_IN_OUT,
-//    RGB_MODE_SINGLE_COLOR_CHASE,
-//    RGB_MODE_SINGLE_COLOR
-//};
-//
-//public enum RGB_DIRECTION : byte {
-//    RGB_DIRECTION_CLOCKWISE,
-//    RGB_DIRECTION_COUNTER_CLOCKWISE
-//};
 //
 //public enum TS_B : byte {
 //    TS_B_3950,
@@ -195,9 +213,9 @@ enum class rgb_extended_status : uint8_t {
 
 
 /// <summary>
-/// Receives the readings of a single power sensor.
+/// Receives the raw readings of a single power sensor.
 /// </summary>
-typedef struct bechlab_power_reading_t {
+typedef struct LIBBENCHLAB_API bechlab_power_reading_t {
     int16_t voltage;
     int32_t current;
     int32_t power;
@@ -205,9 +223,9 @@ typedef struct bechlab_power_reading_t {
 
 
 /// <summary>
-/// Receives the readings of a single fan sensor.
+/// Receives the raw readings of a single fan sensor.
 /// </summary>
-typedef struct benchlab_fan_reading_t {
+typedef struct LIBBENCHLAB_API benchlab_fan_reading_t {
     uint8_t enable;
     uint8_t duty;
     uint16_t tach;
@@ -215,8 +233,14 @@ typedef struct benchlab_fan_reading_t {
 
 
 /// <summary>
-/// Specifies the sensor readings obtained at once from a Benchlab device.
+/// Specifies the raw sensor readings obtained at once from a Benchlab device.
 /// </summary>
+/// <remarks>
+/// The structure is defined to map the exact memory layout of what we read from
+/// the hardware. Therefore, the data in the fields might be reinterpreted to
+/// make sense from them. It is not recommended using this structure directly in
+/// client applications.
+/// </remarks>
 typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
     int16_t vin[BENCHLAB_VIN_SENSORS];
     uint16_t vdd;
@@ -225,9 +249,9 @@ typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
     int16_t ts[BENCHLAB_TEMPERATURE_SENSORS];
     int16_t tamb;
     uint16_t hum;
-    fan_switch_status fan_switch;
-    rgb_switch_status rgb_switch;
-    rgb_extended_status rgb_extended_status;
+    benchlab_fan_switch_status fan_switch;
+    benchlab_rgb_switch_status rgb_switch;
+    benchlab_rgb_extended_status rgb_extended_status;
     uint8_t fan_extended_duty;
     bechlab_power_reading power_readings[BENCHLAB_POWER_SENSORS];
     benchlab_fan_reading fans[BENCHLAB_FANS];

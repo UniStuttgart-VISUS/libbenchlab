@@ -9,7 +9,16 @@
 #include <inttypes.h>
 
 #if defined(__cplusplus)
+/// <summary>
+/// The vendor ID we expect to get from the device when retrieving the
+/// vendor data.
+/// </summary>
 constexpr int BENCHLAB_VENDOR_ID = 0xEE;
+
+/// <summary>
+/// The product ID we expect to get from the device when retrieving the vendor
+/// data.
+/// </summary>
 constexpr int BENCHLAB_PRODUCT_ID = 0x10;
 constexpr int BENCHLAB_FIRMWARE_VERSION = 0xFF;
 
