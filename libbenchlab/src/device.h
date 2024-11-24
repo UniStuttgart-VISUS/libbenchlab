@@ -58,6 +58,11 @@ public:
         _In_ const benchlab_serial_configuration *config) noexcept;
 
     /// <summary>
+    /// Obtains a single set of sensor readings from the device.
+    /// </summary>
+    HRESULT read(_Out_ benchlab_sensor_readings& readings) const noexcept;
+
+    /// <summary>
     /// Gets the unique ID of the device.
     /// </summary>
     HRESULT uid(_Out_ uid_type& uid) const noexcept;

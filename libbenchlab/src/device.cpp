@@ -7,6 +7,8 @@
 #include "device.h"
 
 #include <cerrno>
+#include <cstring>
+#include <limits>
 
 
 /*
@@ -130,55 +132,64 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         dcb.ByteSize = static_cast<BYTE>(config->data_bits);
         dcb.Parity = static_cast<BYTE>(config->parity);
         dcb.StopBits = static_cast<BYTE>(config->stop_bits);
-        // TODO
 
-#if false
-        {
-            Debug.Assert(!(value < Handshake.None || value > Handshake.RequestToSendXOnXOff),
-                "An invalid value was passed to Handshake");
+        // Like in the .NET framework, mak the handshake stuff to DCB. Cf.
+        // https://github.com/dotnet/runtime/blob/9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3/src/libraries/System.IO.Ports/src/System/IO/Ports/SerialStream.Windows.cs#L191-L235
+        const auto rts = (config->handshake
+            == benchlab_handshake::request_to_send);
+        const auto rts_xon_xoff = (config->handshake
+            == benchlab_handshake::request_to_send_xon_xoff);
+        const auto xon_xoff = (config->handshake
+            == benchlab_handshake::xon_xoff);
 
-            if (value != _handshake) {
-                // in the DCB, handshake affects the fRtsControl, fOutxCtsFlow, and fInX, fOutX fields,
-                // so we must save everything in that closure before making any changes.
-                Handshake handshakeOld = _handshake;
-                int fInOutXOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FINX);
-                int fOutxCtsFlowOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW);
-                int fRtsControlOld = GetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL);
+        dcb.fInX = dcb.fOutX = (xon_xoff || rts_xon_xoff) ? 1 : 0;
+        dcb.fOutxCtsFlow = (rts || rts_xon_xoff) ? 1 : 0;
 
-                _handshake = value;
-                int fInXOutXFlag = (_handshake == Handshake.XOnXOff || _handshake == Handshake.RequestToSendXOnXOff) ? 1 : 0;
-                SetDcbFlag(Interop.Kernel32.DCBFlags.FINX, fInXOutXFlag);
-                SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTX, fInXOutXFlag);
-
-                SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW, (_handshake == Handshake.RequestToSend ||
-                    _handshake == Handshake.RequestToSendXOnXOff) ? 1 : 0);
-
-                if ((_handshake == Handshake.RequestToSend ||
-                    _handshake == Handshake.RequestToSendXOnXOff)) {
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_HANDSHAKE);
-                } else if (_rtsEnable) {
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_ENABLE);
-                } else {
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_DISABLE);
-                }
-
-                if (Interop.Kernel32.SetCommState(_handle, ref _dcb) == false) {
-                    _handshake = handshakeOld;
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FINX, fInOutXOld);
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTX, fInOutXOld);
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FOUTXCTSFLOW, fOutxCtsFlowOld);
-                    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, fRtsControlOld);
-                    throw Win32Marshal.GetExceptionForLastWin32Error();
-                }
-
-    }
-}
-#endif
+        if (rts || rts_xon_xoff) {
+            dcb.fRtsControl = RTS_CONTROL_HANDSHAKE;
+        //} else if (_rtsEnable) {
+        //    SetDcbFlag(Interop.Kernel32.DCBFlags.FRTSCONTROL, Interop.Kernel32.DCBRTSFlowControl.RTS_CONTROL_ENABLE);
+        } else {
+            dcb.fRtsControl = RTS_CONTROL_DISABLE;
+        }
 
         if (!::SetCommState(this->_handle, &dcb)) {
             auto retval = HRESULT_FROM_WIN32(::GetLastError());
             //_powenetics_debug("Updating state of COM port failed.\r\n");
             return retval;
+        }
+    }
+
+    {
+        COMMTIMEOUTS cto { 0 };
+        constexpr auto infinite = (std::numeric_limits<std::uint32_t>::max)();
+        // Cf. https://github.com/dotnet/runtime/blob/9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3/src/libraries/System.IO.Ports/src/System/IO/Ports/SerialStream.Windows.cs#L363-L364
+        constexpr auto infinite_magic = -2;
+
+        if (config->read_timeout == 0) {
+            cto.ReadTotalTimeoutConstant = 0;
+            cto.ReadTotalTimeoutMultiplier = 0;
+            cto.ReadIntervalTimeout = MAXDWORD;
+
+        } else if (config->read_timeout == infinite) {
+            cto.ReadTotalTimeoutConstant = infinite_magic;
+            cto.ReadTotalTimeoutMultiplier = 0;
+            cto.ReadIntervalTimeout = MAXDWORD;
+
+        } else {
+            cto.ReadTotalTimeoutConstant = config->read_timeout;
+            cto.ReadTotalTimeoutMultiplier = MAXDWORD;
+            cto.ReadIntervalTimeout = MAXDWORD;
+        }
+
+        cto.WriteTotalTimeoutConstant = config->write_timeout;
+        if (cto.WriteTotalTimeoutConstant == infinite) {
+            cto.WriteTotalTimeoutConstant = 0;
+        }
+
+        auto hr = ::SetCommTimeouts(this->_handle, &cto);
+        if (FAILED(hr)) {
+            return hr;
         }
     }
 #else /* defined(_WIN32) */
@@ -206,9 +217,32 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
 
 
 /*
+ * benchlab_device::read
+ */
+HRESULT benchlab_device::read(
+        _Out_ benchlab_sensor_readings& readings) const noexcept {
+    auto hr = this->check_handle();
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = this->write(command::read_sensors);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = this->read(&readings, sizeof(readings), this->_timeout);
+
+    return hr;
+}
+
+
+/*
  * benchlab_device::uid
  */
 HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
+    ::memset(&uid, 0, sizeof(uid));
+
     auto hr = this->check_handle();
     if (FAILED(hr)) {
         return hr;
@@ -219,20 +253,13 @@ HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
         return hr;
     }
 
-    std::array<std::uint8_t, 12> response;
+    std::array<std::uint8_t, 12> response;  // sic.
     hr = this->read(response, this->_timeout);
     if (FAILED(hr)) {
         return hr;
     }
 
-    // TODO
-    //byte[] txBuffer = ToByteArray(UART_CMD.UART_CMD_READ_UID);
-    //if (!SendCommand(txBuffer, out byte[] rxBuffer, 12)) {
-    //    return false;
-    //}
-
-    //byte[] guidBuffer = new byte[16];
-    //Array.Copy(rxBuffer, 0, guidBuffer, 0, 12);
+    ::memcpy(&uid, response.data(), response.size());
     return S_OK;
 }
 
@@ -276,7 +303,7 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
  * benchlab_device::check_welcome
  */
 HRESULT benchlab_device::check_welcome(void) const noexcept {
-    static const std::string expected("BENCHLAB");
+    static constexpr const char *const expected = "BENCHLAB";
 
     auto hr = this->write(command::welcome);
     if (FAILED(hr)) {
@@ -289,7 +316,8 @@ HRESULT benchlab_device::check_welcome(void) const noexcept {
         return hr;
     }
 
-    if (expected != response.data()) {
+    if (!std::equal(expected, expected + sizeof(expected),
+            response.begin(), response.end())) {
         return E_NOTIMPL;
     }
 
