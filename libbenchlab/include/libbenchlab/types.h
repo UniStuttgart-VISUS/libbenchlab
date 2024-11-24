@@ -195,15 +195,24 @@ enum class benchlab_rgb_switch_status : std::uint8_t {
 #define benchlab_rgb_switch_status_play ((benchlab_rgb_switch_status) 1);
 #endif /* defined(__cplusplus) */
 
-
-//public enum TEMP_SRC : byte {
-//    TEMP_SRC_AUTO,
-//    TEMP_SRC_TS1,
-//    TEMP_SRC_TS2,
-//    TEMP_SRC_TS3,
-//    TEMP_SRC_TS4,
-//    TEMP_SRC_TAMB
-//};
+#if defined(__cplusplus)
+enum class benchlab_temperature_source : std::uint8_t {
+    automatic = 0,
+    sensor1,
+    sensor2,
+    sensor3,
+    sensor4,
+    ambient
+};
+#else /* defined(__cplusplus) */
+#define benchlab_temperature_source uint8_t
+#define benchlab_temperature_source_automatic ((benchlab_temperature_source) 0);
+#define benchlab_temperature_source_sensor1 ((benchlab_temperature_source) 1);
+#define benchlab_temperature_source_sensor2 ((benchlab_temperature_source) 2);
+#define benchlab_temperature_source_sensor3 ((benchlab_temperature_source) 3);
+#define benchlab_temperature_source_sensor4 ((benchlab_temperature_source) 4);
+#define benchlab_temperature_source_ambient ((benchlab_temperature_source) 5);
+#endif /* defined(__cplusplus) */
 
 //
 //public enum TS_B : byte {
@@ -213,13 +222,19 @@ enum class benchlab_rgb_switch_status : std::uint8_t {
 
 
 /// <summary>
-/// Receives the raw readings of a single power sensor.
+/// Configures the behaviour of the fans controlled by the Benchlab device.
 /// </summary>
-typedef struct LIBBENCHLAB_API bechlab_power_reading_t {
-    int16_t voltage;
-    int32_t current;
-    int32_t power;
-} bechlab_power_reading;
+typedef struct LIBBENCHLAB_API bechlab_fan_config_t {
+    benchlab_fan_mode fan_mode;
+    benchlab_temperature_source temperature_source;
+    int16_t temperature[BENCHLAB_FAN_CURVE_POINTS];
+    int16_t duty[BENCHLAB_FAN_CURVE_POINTS];
+    uint8_t ramp_step;
+    uint8_t fixed_duty;
+    uint8_t min_duty;
+    uint8_t max_duty;
+    benchlab_fan_stop fan_stop;
+} bechlab_fan_config;
 
 
 /// <summary>
@@ -230,6 +245,30 @@ typedef struct LIBBENCHLAB_API benchlab_fan_reading_t {
     uint8_t duty;
     uint16_t tach;
 } benchlab_fan_reading;
+
+
+/// <summary>
+/// Receives the raw readings of a single power sensor.
+/// </summary>
+typedef struct LIBBENCHLAB_API benchlab_power_reading_t {
+    int16_t voltage;
+    int32_t current;
+    int32_t power;
+} benchlab_power_reading;
+
+
+/// <summary>
+/// Configures the behaviour of the RGB LEDs at the bottom of the Benchlab
+/// device.
+/// </summary>
+typedef struct LIBBENCHLAB_API benchlab_rgb_config_t {
+    benchlab_rgb_mode mode;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    benchlab_rgb_direction direction;
+    uint8_t speed;
+} benchlab_rgb_config;
 
 
 /// <summary>
@@ -253,7 +292,7 @@ typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
     benchlab_rgb_switch_status rgb_switch;
     benchlab_rgb_extended_status rgb_extended_status;
     uint8_t fan_extended_duty;
-    bechlab_power_reading power_readings[BENCHLAB_POWER_SENSORS];
+    benchlab_power_reading power_readings[BENCHLAB_POWER_SENSORS];
     benchlab_fan_reading fans[BENCHLAB_FANS];
 } benchlab_sensor_readings;
 
