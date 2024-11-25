@@ -73,7 +73,6 @@ HRESULT LIBBENCHLAB_API benchlab_get_device_name(
 }
 
 
-
 /*
  * ::benchlab_get_device_uid
  */
@@ -179,12 +178,14 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
         }
     }
 
-    // Bail out if we cannot return all devices.
+    // Bail out if we cannot return all devices, but tell the caller how big
+    // the output array must be to hold all devices.
     if (*cnt < ports.size()) {
+        *cnt = ports.size();
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
     }
 
-    // Open the devices and count how many of it are working.
+    // Open the devices and count how many of it are actually working.
     *cnt = 0;
     for (std::size_t i = 0; i < ports.size(); ++i) {
         _Analysis_assume_(out_handles != nullptr);
