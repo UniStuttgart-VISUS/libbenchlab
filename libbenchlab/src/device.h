@@ -68,9 +68,17 @@ public:
         _In_ const std::chrono::milliseconds duration) noexcept;
 
     /// <summary>
-    /// Reads the current configuration of the RGB LEDs.
+    /// Reads the specified fan profile.
     /// </summary>
-    HRESULT read(_Out_ benchlab_rgb_config& config) const noexcept;
+    HRESULT read(_Out_ benchlab_fan_config& config,
+        _In_ const std::uint8_t profile,
+        _In_ const std::uint8_t fan) const noexcept;
+
+    /// <summary>
+    /// Reads the specified LED profile.
+    /// </summary>
+    HRESULT read(_Out_ benchlab_rgb_config& config,
+        _In_ const std::uint8_t profile) const noexcept;
 
     /// <summary>
     /// Obtains a single set of sensor readings from the device.
@@ -92,7 +100,8 @@ public:
     /// <summary>
     /// Updates the configuration of the RGB LEDs.
     /// </summary>
-    HRESULT write(_In_ const benchlab_rgb_config& config) noexcept;
+    HRESULT write(_In_ const benchlab_rgb_config& config,
+        _In_ const std::uint8_t profile) noexcept;
 
 private:
 

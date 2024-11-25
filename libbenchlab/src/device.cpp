@@ -244,22 +244,67 @@ HRESULT benchlab_device::press(_In_ const benchlab_button button,
  * benchlab_device::read
  */
 HRESULT benchlab_device::read(
-        _Out_ benchlab_rgb_config& config) const noexcept {
-    auto hr = this->check_handle();
-    if (FAILED(hr)) {
-        return hr;
+        _Out_ benchlab_fan_config& config,
+        _In_ const std::uint8_t profile,
+        _In_ const std::uint8_t fan) const noexcept {
+    {
+        auto hr = this->check_handle();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    hr = this->write(command::read_rgb);
-    if (FAILED(hr)) {
-        return hr;
+    if (profile >= BENCHLAB_FAN_PROFILES) {
+        return E_INVALIDARG;
+    }
+
+    if (fan >= BENCHLAB_FANS) {
+        return E_INVALIDARG;
+    }
+
+    {
+        std::array<std::uint8_t, 2> parameters { profile, fan };
+        auto hr = this->write(command::read_fan_profile,
+            parameters.data(),
+            parameters.size());
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
     this->command_sleep();
 
-    hr = this->read(&config, sizeof(config), this->_timeout);
+    return this->read(&config, sizeof(config), this->_timeout);
+}
 
-    return hr;
+
+/*
+ * benchlab_device::read
+ */
+HRESULT benchlab_device::read(
+        _Out_ benchlab_rgb_config& config,
+        _In_ const std::uint8_t profile) const noexcept {
+    {
+        auto hr = this->check_handle();
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
+    if (profile >= BENCHLAB_RGB_PROFILES) {
+        return E_INVALIDARG;
+    }
+
+    {
+        auto hr = this->write(command::read_rgb, &profile, 1);
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
+    this->command_sleep();
+
+    return this->read(&config, sizeof(config), this->_timeout);
 }
 
 
@@ -320,13 +365,27 @@ HRESULT benchlab_device::uid(
  * benchlab_device::write
  */
 HRESULT benchlab_device::write(
-        _In_ const benchlab_rgb_config& config) noexcept {
-    auto hr = this->check_handle();
-    if (FAILED(hr)) {
-        return hr;
+        _In_ const benchlab_rgb_config& config,
+        _In_ const std::uint8_t profile) noexcept {
+    {
+        auto hr = this->check_handle();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    return this->write(command::write_rgb, &config, sizeof(config));
+    if (profile >= BENCHLAB_RGB_PROFILES) {
+        return E_INVALIDARG;
+    }
+
+    {
+        auto hr = this->write(command::write_rgb, &profile, 1);
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
+    return this->write(&config, sizeof(config));
 }
 
 

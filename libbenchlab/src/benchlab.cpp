@@ -205,7 +205,8 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
  */
 HRESULT LIBBENCHLAB_API benchlab_read_rgb(
         _Out_ benchlab_rgb_config *out_config,
-        _In_ benchlab_handle handle) {
+        _In_ benchlab_handle handle,
+        _In_ const uint8_t profile) {
     if (out_config == nullptr) {
         return E_POINTER;
     }
@@ -213,7 +214,7 @@ HRESULT LIBBENCHLAB_API benchlab_read_rgb(
         return E_HANDLE;
     }
 
-    return handle->read(*out_config);
+    return handle->read(*out_config, profile);
 }
 
 
@@ -239,7 +240,8 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
  */
 HRESULT LIBBENCHLAB_API benchlab_write_rgb(
         _In_ benchlab_handle handle,
-        _In_ const benchlab_rgb_config *config) {
+        _In_ const benchlab_rgb_config *config,
+        _In_ const uint8_t profile) {
     if (handle == nullptr) {
         return E_HANDLE;
     }
@@ -247,5 +249,5 @@ HRESULT LIBBENCHLAB_API benchlab_write_rgb(
         return E_INVALIDARG;
     }
 
-    return handle->write(*config);
+    return handle->write(*config, profile);
 }

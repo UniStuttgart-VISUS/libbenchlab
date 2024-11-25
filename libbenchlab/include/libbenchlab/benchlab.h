@@ -119,16 +119,18 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
     _Inout_ size_t *cnt);
 
 /// <summary>
-/// Read the current RGB configuration from the Benchlab.
+/// Read a RGB profile from the Benchlab.
 /// </summary>
 /// <param name="out_config">Receives the current RGB configuration in case of
 /// success.</param>
 /// <param name="handle">The handle of the device to get the configuration from.
 /// </param>
+/// <param name="profile">The zero-based ID of the profile to retrieve.</param>
 /// <returns></returns>
 HRESULT LIBBENCHLAB_API benchlab_read_rgb(
     _Out_ benchlab_rgb_config *out_config,
-    _In_ benchlab_handle handle);
+    _In_ benchlab_handle handle,
+    _In_ const uint8_t profile);
 
 /// <summary>
 /// Performs a raw read of sensor data from the given Benchlab device.
@@ -149,7 +151,8 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
 
 HRESULT LIBBENCHLAB_API benchlab_write_rgb(
     _In_ benchlab_handle handle,
-    _In_ const benchlab_rgb_config *config);
+    _In_ const benchlab_rgb_config *config,
+    _In_ const uint8_t profile);
 
 #if defined(__cplusplus)
 } /* extern "C" */

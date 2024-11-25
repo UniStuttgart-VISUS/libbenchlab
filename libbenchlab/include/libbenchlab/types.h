@@ -234,7 +234,7 @@ enum class benchlab_temperature_source : std::uint8_t {
 /// <summary>
 /// Configures the behaviour of the fans controlled by the Benchlab device.
 /// </summary>
-typedef struct LIBBENCHLAB_API bechlab_fan_config_t {
+typedef struct LIBBENCHLAB_API benchlab_fan_config_t {
     benchlab_fan_mode fan_mode;
     benchlab_temperature_source temperature_source;
     int16_t temperature[BENCHLAB_FAN_CURVE_POINTS];
@@ -244,7 +244,7 @@ typedef struct LIBBENCHLAB_API bechlab_fan_config_t {
     uint8_t min_duty;
     uint8_t max_duty;
     benchlab_fan_stop fan_stop;
-} bechlab_fan_config;
+} benchlab_fan_config;
 
 
 /// <summary>
