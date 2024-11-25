@@ -11,6 +11,7 @@
 
 #if defined(_WIN32)
 #include <conio.h>
+#include <objbase.h>
 #include <Windows.h>
 #include <tchar.h>
 #else /* defined(_WIN32) */
@@ -106,6 +107,53 @@ int _tmain(int argc, _TCHAR **argv) {
         }
     }
     assert((handle != NULL) || FAILED(hr));
+
+    if (SUCCEEDED(hr)) {
+        benchlab_device_uid_type uid;
+        if (SUCCEEDED(hr = benchlab_get_device_uid(&uid, handle))) {
+#if defined(_WIN32)
+            wchar_t str[128];
+            if (StringFromGUID2(&uid, str, sizeof(str) / sizeof(wchar_t))) {
+                printf("Device UID: %ls\r\n", str);
+            }
+#endif /* defined(_WIN32) */
+        }
+    }
+
+    if (SUCCEEDED(hr)) {
+        char name[64];
+        size_t cnt = sizeof(name);
+        if (SUCCEEDED(hr = benchlab_get_device_name(name, &cnt, handle))) {
+            printf("Device name: %s\r\n", name);
+        }
+    }
+
+    if (SUCCEEDED(hr)) {
+        uint8_t version = 0;
+        if (SUCCEEDED(hr = benchlab_get_firmware(&version, handle))) {
+            printf("Firmware version: %hhu\r\n", version);
+        }
+    }
+
+    if (SUCCEEDED(hr)) {
+        benchlab_sensor_readings readings;
+        hr = benchlab_read_sensors(&readings, handle);
+
+        //benchlab_rgb_config rgb_config;
+        //hr = benchlab_read_rgb(&rgb_config, handle);
+
+        //rgb_config.red = 0x00;
+        //rgb_config.green = 0x00;
+        //rgb_config.blue = 0xff;
+        //rgb_config.mode = benchlab_rgb_mode_single_colour;
+        //rgb_config.speed = 128;
+        //rgb_config.direction = benchlab_rgb_direction_anti_clockwise;
+        //hr = benchlab_write_rgb(handle, &rgb_config);
+
+        //hr = benchlab_read_rgb(&rgb_config, handle);
+
+        //hr = benchlab_button_press(handle, benchlab_button_power, 200);
+    }
 
 #if false
     // Calibrate the device.

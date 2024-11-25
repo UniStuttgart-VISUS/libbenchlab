@@ -33,11 +33,6 @@ struct LIBBENCHLAB_TEST_API benchlab_device final {
 
 public:
 
-    /// <summary>
-    /// The type of the unique device ID.
-    /// </summary>
-    typedef GUID uid_type;
-
     template<class TIterator> static HRESULT ports(_In_ TIterator oit);
 
     benchlab_device(void) noexcept;
@@ -67,6 +62,17 @@ public:
         _In_ const benchlab_serial_configuration *config) noexcept;
 
     /// <summary>
+    /// Press the given button for the specified time.
+    /// </summary>
+    HRESULT press(_In_ const benchlab_button button,
+        _In_ const std::chrono::milliseconds duration) noexcept;
+
+    /// <summary>
+    /// Reads the current configuration of the RGB LEDs.
+    /// </summary>
+    HRESULT read(_Out_ benchlab_rgb_config& config) const noexcept;
+
+    /// <summary>
     /// Obtains a single set of sensor readings from the device.
     /// </summary>
     HRESULT read(_Out_ benchlab_sensor_readings& readings) const noexcept;
@@ -74,9 +80,26 @@ public:
     /// <summary>
     /// Gets the unique ID of the device.
     /// </summary>
-    HRESULT uid(_Out_ uid_type& uid) const noexcept;
+    HRESULT uid(_Out_ benchlab_device_uid_type& uid) const noexcept;
+
+    /// <summary>
+    /// Gets the firmware version of a connected device.
+    /// </summary>
+    inline std::uint8_t version(void) const noexcept {
+        return this->_version;
+    }
+
+    /// <summary>
+    /// Updates the configuration of the RGB LEDs.
+    /// </summary>
+    HRESULT write(_In_ const benchlab_rgb_config& config) noexcept;
 
 private:
+
+    enum class action : std::uint8_t {
+        none = 0,
+        button
+    };
 
     enum class command : std::uint8_t {
         welcome = 0,
@@ -131,6 +154,18 @@ private:
     /// was retrieved, but it was not the expected one, an error code if the
     /// underlying I/O operations failed.</returns>
     HRESULT check_welcome(void) const noexcept;
+
+    /// <summary>
+    /// Perform a &quot;strategic sleep&quot; on the calling thread.
+    /// </summary>
+    /// <remarks>
+    /// This method should be called after sending a read command and before
+    /// reading the actual answer. Otherwise, the first byte of the answer might
+    /// be missing.
+    /// </remarks>
+    inline void command_sleep(void) const{
+        std::this_thread::sleep_for(this->_command_sleep);
+    }
 
     /// <summary>
     /// Reads at most <paramref name="cnt" /> bytes from the serial port.
@@ -239,6 +274,7 @@ private:
         _In_reads_bytes_opt_(cnt) const void *parameter = nullptr,
         _In_ const std::size_t cnt = 0) const noexcept;
 
+    std::chrono::microseconds _command_sleep;
     handle_type _handle;
     std::chrono::milliseconds _timeout;
     std::uint8_t _version;

@@ -14,6 +14,22 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+/// <summary>
+/// Press the specified <paramref name="button" /> for the given
+/// <pararmef name="duration" /> in milliseconds.
+/// </summary>
+/// <param name="handle">The handle of the device to press the button of.
+/// </param>
+/// <param name="button">The button to be pressed.</param>
+/// <param name="duration">The duration to hold the button in milliseconds. Note
+/// that the hardware only supports multiples of 100 ms, to any value below 100
+/// will be clamped to 100. The original software uses 200 ms, so we recommend
+/// using 200 here.</param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_button_press(
+    _In_ benchlab_handle handle,
+    _In_ const benchlab_button button,
+    _In_ const uint8_t duration);
 
 /// <summary>
 /// Closes the handle to the given Benchlab telemetry system.
@@ -22,6 +38,42 @@ extern "C" {
 /// <returns><c>S_OK</c> in case of success,
 /// <c>E_HANDLE</c> if <paramref name="handle" /> is invalid.</returns>
 HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle);
+
+/// <summary>
+/// Gets the user-defined device name of the Benchlab device.
+/// </summary>
+/// <param name="out_name">Receives the name of the device.</param>
+/// <param name="cnt">On entry, the number of characters that can be written
+/// to <paramref name="out_name" />. On exit, the required number of characters
+/// for the device name.</param>
+/// <param name="handle">The handle of the device to get the name of.</param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_get_device_name(
+    _Out_writes_z_(*cnt) char *out_name,
+    _Inout_ size_t *cnt,
+    _In_ benchlab_handle handle);
+
+/// <summary>
+/// Retrieve the unique hardware ID of the Benchlab.
+/// </summary>
+/// <param name="out_uid">Receives the hardware GUID of the device.</param>
+/// <param name="handle">The handle of the device to retrieve the GUID of.
+/// </param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_get_device_uid(
+    _Out_ benchlab_device_uid_type *out_uid,
+    _In_ benchlab_handle handle);
+
+/// <summary>
+/// Gets the version of the firmware of the Benchlab.
+/// </summary>
+/// <param name="out_version">Receives the firmware version.</param>
+/// <param name="handle">The handle of the device to get the firmware
+/// of.</param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_get_firmware(
+    _Out_ uint8_t *out_version,
+    _In_ benchlab_handle handle);
 
 /// <summary>
 /// Opens a handle to the Benchöab telemetry system connected to the specified
@@ -38,8 +90,8 @@ HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle);
 /// configuration by calling
 /// <see cref="benchlab_initialise_serial_configuration" />.</param>
 /// <returns><c>S_OK</c> in case of success,
-/// <c>E_INVALIDARG</c> if either <paramref name="out_handle "/> or
-/// <paramref name="com_port" /> is <c>nullptr</c>,
+/// <c>E_POINTER> if <paramref name="out_handle "/> is <c>nullptr</c>,
+/// <c>E_INVALIDARG</c> if <paramref name="com_port" /> is <c>nullptr</c>,
 /// <c>E_NOT_VALID_STATE</c> if the device has already been opened
 /// before, a platform-specific error code if accessing the selected
 /// serial port failed.</returns>
@@ -65,6 +117,39 @@ HRESULT LIBBENCHLAB_API benchlab_open(_Out_ benchlab_handle *out_handle,
 HRESULT LIBBENCHLAB_API benchlab_probe(
     _Out_writes_opt_(*cnt) benchlab_handle *out_handles,
     _Inout_ size_t *cnt);
+
+/// <summary>
+/// Read the current RGB configuration from the Benchlab.
+/// </summary>
+/// <param name="out_config">Receives the current RGB configuration in case of
+/// success.</param>
+/// <param name="handle">The handle of the device to get the configuration from.
+/// </param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_read_rgb(
+    _Out_ benchlab_rgb_config *out_config,
+    _In_ benchlab_handle handle);
+
+/// <summary>
+/// Performs a raw read of sensor data from the given Benchlab device.
+/// </summary>
+/// <remarks>
+/// It is not recommended to perform raw reads as the sensor readings contain the
+/// internal representation of the sensor data rather than in ready-to-use units.
+/// </remarks>
+/// <param name="out_readings">Receives the sensor readings.</param>
+/// <param name="handle">The handle for the device.</param>
+/// <returns><c>S_OK</c> if the data have been returned into the output buffer,
+/// <c>E_POINTER</c> if <paramref name="out_readings" /> is <c>nullptr</c>,
+/// <c>E_HANDLE</c> if <paramref name="handle" /> is invalid, or an appropriate
+/// error code in case of any other error.</returns>
+HRESULT LIBBENCHLAB_API benchlab_read_sensors(
+    _Out_ benchlab_sensor_readings *out_readings,
+    _In_ benchlab_handle handle);
+
+HRESULT LIBBENCHLAB_API benchlab_write_rgb(
+    _In_ benchlab_handle handle,
+    _In_ const benchlab_rgb_config *config);
 
 #if defined(__cplusplus)
 } /* extern "C" */

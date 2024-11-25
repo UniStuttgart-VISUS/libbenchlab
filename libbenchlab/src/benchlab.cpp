@@ -10,18 +10,103 @@
 
 
 /*
+ * ::benchlab_button_press
+ */
+HRESULT LIBBENCHLAB_API benchlab_button_press(_In_ benchlab_handle handle,
+        _In_ const benchlab_button button,
+        _In_ const uint8_t duration) {
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    return handle->press(button, std::chrono::milliseconds(duration));
+}
+
+
+/*
  * ::benchlab_close
  */
 HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle) {
     if (handle == nullptr) {
         return E_HANDLE;
-
-    } else {
-        delete handle;
-        return S_OK;
     }
+
+    delete handle;
+    return S_OK;
 }
 
+
+/*
+ * benchlab_get_device_name
+ */
+HRESULT LIBBENCHLAB_API benchlab_get_device_name(
+        _Out_writes_z_(*cnt) char *out_name,
+        _Inout_ size_t *cnt,
+        _In_ benchlab_handle handle) {
+    if (cnt == nullptr) {
+        return E_POINTER;
+    }
+
+    const auto available = *cnt;
+    if ((available > 0) && (out_name == nullptr)) {
+        return E_POINTER;
+    }
+
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    std::vector<char> name;
+    auto hr = handle->name(name);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    *cnt = name.size() + 1;
+    if (available < *cnt) {
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    }
+
+    ::memcpy(out_name, name.data(), name.size() * sizeof(char));
+    out_name[name.size()] = 0;
+    return S_OK;
+}
+
+
+
+/*
+ * ::benchlab_get_device_uid
+ */
+HRESULT LIBBENCHLAB_API benchlab_get_device_uid(
+        _Out_ benchlab_device_uid_type *out_uid,
+        _In_ benchlab_handle handle) {
+    if (out_uid == nullptr) {
+        return E_POINTER;
+    }
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    return handle->uid(*out_uid);
+}
+
+
+/*
+ * ::benchlab_get_firmware
+ */
+HRESULT LIBBENCHLAB_API benchlab_get_firmware(
+        _Out_ uint8_t *out_version,
+        _In_ benchlab_handle handle) {
+    if (out_version == nullptr) {
+        return E_POINTER;
+    }
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    *out_version = handle->version();
+    return S_OK;
+}
 
 /*
  * ::benchlab_open
@@ -31,7 +116,7 @@ HRESULT LIBBENCHLAB_API benchlab_open(_Out_ benchlab_handle *out_handle,
         _In_opt_ const benchlab_serial_configuration *config) {
     if (out_handle == nullptr) {
         //_powenetics_debug("Invalid storage location for handle provided.\r\n");
-        return E_INVALIDARG;
+        return E_POINTER;
     }
     if (com_port == nullptr) {
         //_powenetics_debug("Invalid COM port provided.\r\n");
@@ -111,4 +196,55 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
     }
 
     return (*cnt > 0) ? S_OK : E_NOT_SET;
+}
+
+
+/*
+ * ::benchlab_read_rgb
+ */
+HRESULT LIBBENCHLAB_API benchlab_read_rgb(
+        _Out_ benchlab_rgb_config *out_config,
+        _In_ benchlab_handle handle) {
+    if (out_config == nullptr) {
+        return E_POINTER;
+    }
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    return handle->read(*out_config);
+}
+
+
+/*
+ * ::benchlab_read_sensors
+ */
+HRESULT LIBBENCHLAB_API benchlab_read_sensors(
+        _Out_ benchlab_sensor_readings *out_readings,
+        _In_ benchlab_handle handle) {
+    if (out_readings == nullptr) {
+        return E_POINTER;
+    }
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+
+    return handle->read(*out_readings);
+}
+
+
+/*
+ * ::benchlab_write_rgb
+ */
+HRESULT LIBBENCHLAB_API benchlab_write_rgb(
+        _In_ benchlab_handle handle,
+        _In_ const benchlab_rgb_config *config) {
+    if (handle == nullptr) {
+        return E_HANDLE;
+    }
+    if (config == nullptr) {
+        return E_INVALIDARG;
+    }
+
+    return handle->write(*config);
 }

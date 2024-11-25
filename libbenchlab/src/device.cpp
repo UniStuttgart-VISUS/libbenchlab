@@ -6,6 +6,7 @@
 
 #include "device.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 #include <limits>
@@ -15,7 +16,8 @@
  * benchlab_device::benchlab_device
  */
 benchlab_device::benchlab_device(void) noexcept
-        : _handle(invalid_handle),
+        : _command_sleep(10),
+        _handle(invalid_handle),
         _timeout(0),
         _version(0) { }
 
@@ -60,6 +62,8 @@ HRESULT benchlab_device::name(_Out_ std::vector<char>& name) const noexcept {
     if (FAILED(hr)) {
         return hr;
     }
+
+    this->command_sleep();
 
     name.resize(32);
     hr = this->read(name, this->_timeout);
@@ -216,6 +220,50 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
 
 
 /*
+ * benchlab_device::press
+ */
+HRESULT benchlab_device::press(_In_ const benchlab_button button,
+        _In_ const std::chrono::milliseconds duration) noexcept {
+    constexpr std::chrono::milliseconds unit(100);
+    constexpr std::chrono::microseconds::rep one = 1;
+
+    // Arguments are: type of the action, the button, 1/0 for press/release, the
+    // duration in 100 ms units.
+    std::array<std::uint8_t, 4> parameters{
+        static_cast<std::uint8_t>(action::button),
+        static_cast<std::uint8_t>(button),
+        static_cast<std::uint8_t>(1),
+        static_cast<std::uint8_t>((std::max)(duration / unit, one))
+    };
+
+    return this->write(command::action, parameters.data(), parameters.size());
+}
+
+
+/*
+ * benchlab_device::read
+ */
+HRESULT benchlab_device::read(
+        _Out_ benchlab_rgb_config& config) const noexcept {
+    auto hr = this->check_handle();
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = this->write(command::read_rgb);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    this->command_sleep();
+
+    hr = this->read(&config, sizeof(config), this->_timeout);
+
+    return hr;
+}
+
+
+/*
  * benchlab_device::read
  */
 HRESULT benchlab_device::read(
@@ -230,6 +278,8 @@ HRESULT benchlab_device::read(
         return hr;
     }
 
+    this->command_sleep();
+
     hr = this->read(&readings, sizeof(readings), this->_timeout);
 
     return hr;
@@ -239,7 +289,8 @@ HRESULT benchlab_device::read(
 /*
  * benchlab_device::uid
  */
-HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
+HRESULT benchlab_device::uid(
+        _Out_ benchlab_device_uid_type& uid) const noexcept {
     ::memset(&uid, 0, sizeof(uid));
 
     auto hr = this->check_handle();
@@ -252,6 +303,8 @@ HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
         return hr;
     }
 
+    this->command_sleep();
+
     std::array<std::uint8_t, 12> response;  // sic.
     hr = this->read(response, this->_timeout);
     if (FAILED(hr)) {
@@ -260,6 +313,20 @@ HRESULT benchlab_device::uid(_Out_ uid_type& uid) const noexcept {
 
     ::memcpy(&uid, response.data(), response.size());
     return S_OK;
+}
+
+
+/*
+ * benchlab_device::write
+ */
+HRESULT benchlab_device::write(
+        _In_ const benchlab_rgb_config& config) noexcept {
+    auto hr = this->check_handle();
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    return this->write(command::write_rgb, &config, sizeof(config));
 }
 
 
@@ -281,6 +348,8 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
     if (FAILED(hr)) {
         return hr;
     }
+
+    this->command_sleep();
 
     std::array<std::uint8_t, 3> response{ 0 };
     hr = this->read(response, this->_timeout);
@@ -310,6 +379,8 @@ HRESULT benchlab_device::check_welcome(void) const noexcept {
     if (FAILED(hr)) {
         return hr;
     }
+
+    this->command_sleep();
 
     std::array<char, 9> response { 0 };
     hr = this->read(response, this->_timeout);

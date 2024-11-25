@@ -78,6 +78,16 @@ struct benchlab_device;
 typedef struct benchlab_device *benchlab_handle;
 
 
+/// <summary>
+/// The type of the unique device ID.
+/// </summary>
+#if defined(_WIN32)
+typedef GUID benchlab_device_uid_type;
+#else /* defined(_WIN32) */
+#error "TODO"
+#endif /* defined(_WIN32) */
+
+
 #if defined(__cplusplus)
 enum class benchlab_button : std::uint8_t {
     power = 0,
@@ -86,9 +96,9 @@ enum class benchlab_button : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_button uint8_t
-#define benchlab_button_power ((benchlab_button) 0);
-#define benchlab_button_reset ((benchlab_button) 1);
-#define benchlab_button_other ((benchlab_button) 2);
+#define benchlab_button_power ((benchlab_button) 0)
+#define benchlab_button_reset ((benchlab_button) 1)
+#define benchlab_button_other ((benchlab_button) 2)
 #endif /* defined(__cplusplus) */
 
 
@@ -100,9 +110,9 @@ enum class benchlab_fan_mode : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_fan_mode uint8_t
-#define benchlab_fan_mode_temperature_control ((benchlab_fan_mode) 0);
-#define benchlab_fan_mode_fixed ((benchlab_fan_mode) 1);
-#define benchlab_fan_mode_extended ((benchlab_fan_mode) 2);
+#define benchlab_fan_mode_temperature_control ((benchlab_fan_mode) 0)
+#define benchlab_fan_mode_fixed ((benchlab_fan_mode) 1)
+#define benchlab_fan_mode_extended ((benchlab_fan_mode) 2)
 #endif /* defined(__cplusplus) */
 
 
@@ -113,8 +123,8 @@ enum class benchlab_fan_stop : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_fan_stop uint8_t
-#define benchlab_fan_stop_off ((benchlab_fan_stop) 0);
-#define benchlab_fan_stop_on ((benchlab_fan_stop) 1);
+#define benchlab_fan_stop_off ((benchlab_fan_stop) 0)
+#define benchlab_fan_stop_on ((benchlab_fan_stop) 1)
 #endif /* defined(__cplusplus) */
 
 
@@ -126,9 +136,9 @@ enum class benchlab_fan_switch_status : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_fan_switch_status uint8_t
-#define benchlab_fan_switch_status_automatic ((benchlab_fan_switch_status) 0);
-#define benchlab_fan_switch_status_half ((benchlab_fan_switch_status) 1);
-#define benchlab_fan_switch_status_full ((benchlab_fan_switch_status) 2);
+#define benchlab_fan_switch_status_automatic ((benchlab_fan_switch_status) 0)
+#define benchlab_fan_switch_status_half ((benchlab_fan_switch_status) 1)
+#define benchlab_fan_switch_status_full ((benchlab_fan_switch_status) 2)
 #endif /* defined(__cplusplus) */
 
 
@@ -139,8 +149,8 @@ enum class benchlab_rgb_direction : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_rgb_direction uint8_t
-#define benchlab_rgb_direction_clockwise ((benchlab_rgb_direction) 0);
-#define benchlab_rgb_direction_anti_clockwise ((benchlab_rgb_direction) 1);
+#define benchlab_rgb_direction_clockwise ((benchlab_rgb_direction) 0)
+#define benchlab_rgb_direction_anti_clockwise ((benchlab_rgb_direction) 1)
 #endif /* defined(__cplusplus) */
 
 
@@ -151,8 +161,8 @@ enum class benchlab_rgb_extended_status : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_rgb_extended_status uint8_t
-#define benchlab_rgb_extended_status_not_detected ((benchlab_rgb_extended_status) 0);
-#define benchlab_rgb_extended_status_detected ((benchlab_rgb_extended_status) 1);
+#define benchlab_rgb_extended_status_not_detected ((benchlab_rgb_extended_status) 0)
+#define benchlab_rgb_extended_status_detected ((benchlab_rgb_extended_status) 1)
 #endif /* defined(__cplusplus) */
 
 
@@ -171,16 +181,16 @@ enum class benchlab_rgb_mode : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_rgb_mode uint8_t
-#define benchlab_rgb_mode_rainbow_cycle ((benchlab_rgb_mode) 0);
-#define benchlab_rgb_mode_rainbow_colour_chase ((benchlab_rgb_mode) 1);
-#define benchlab_rgb_mode_rainbow ((benchlab_rgb_mode) 2);
-#define benchlab_rgb_mode_twinkle ((benchlab_rgb_mode) 3);
-#define benchlab_rgb_mode_meteor_shower ((benchlab_rgb_mode) 4);
-#define benchlab_rgb_mode_colour_wipe ((benchlab_rgb_mode) 5);
-#define benchlab_rgb_mode_theatre_chase ((benchlab_rgb_mode) 6);
-#define benchlab_rgb_mode_fade_in_out ((benchlab_rgb_mode) 7);
-#define benchlab_rgb_mode_single_colour_chase ((benchlab_rgb_mode) 8);
-#define benchlab_rgb_mode_single_colour ((benchlab_rgb_mode) 9);
+#define benchlab_rgb_mode_rainbow_cycle ((benchlab_rgb_mode) 0)
+#define benchlab_rgb_mode_rainbow_colour_chase ((benchlab_rgb_mode) 1)
+#define benchlab_rgb_mode_rainbow ((benchlab_rgb_mode) 2)
+#define benchlab_rgb_mode_twinkle ((benchlab_rgb_mode) 3)
+#define benchlab_rgb_mode_meteor_shower ((benchlab_rgb_mode) 4)
+#define benchlab_rgb_mode_colour_wipe ((benchlab_rgb_mode) 5)
+#define benchlab_rgb_mode_theatre_chase ((benchlab_rgb_mode) 6)
+#define benchlab_rgb_mode_fade_in_out ((benchlab_rgb_mode) 7)
+#define benchlab_rgb_mode_single_colour_chase ((benchlab_rgb_mode) 8)
+#define benchlab_rgb_mode_single_colour ((benchlab_rgb_mode) 9)
 #endif /* defined(__cplusplus) */
 
 
@@ -191,8 +201,8 @@ enum class benchlab_rgb_switch_status : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_rgb_switch_status uint8_t
-#define benchlab_rgb_switch_status_work ((benchlab_rgb_switch_status) 0);
-#define benchlab_rgb_switch_status_play ((benchlab_rgb_switch_status) 1);
+#define benchlab_rgb_switch_status_work ((benchlab_rgb_switch_status) 0)
+#define benchlab_rgb_switch_status_play ((benchlab_rgb_switch_status) 1)
 #endif /* defined(__cplusplus) */
 
 #if defined(__cplusplus)
@@ -206,12 +216,12 @@ enum class benchlab_temperature_source : std::uint8_t {
 };
 #else /* defined(__cplusplus) */
 #define benchlab_temperature_source uint8_t
-#define benchlab_temperature_source_automatic ((benchlab_temperature_source) 0);
-#define benchlab_temperature_source_sensor1 ((benchlab_temperature_source) 1);
-#define benchlab_temperature_source_sensor2 ((benchlab_temperature_source) 2);
-#define benchlab_temperature_source_sensor3 ((benchlab_temperature_source) 3);
-#define benchlab_temperature_source_sensor4 ((benchlab_temperature_source) 4);
-#define benchlab_temperature_source_ambient ((benchlab_temperature_source) 5);
+#define benchlab_temperature_source_automatic ((benchlab_temperature_source) 0)
+#define benchlab_temperature_source_sensor1 ((benchlab_temperature_source) 1)
+#define benchlab_temperature_source_sensor2 ((benchlab_temperature_source) 2)
+#define benchlab_temperature_source_sensor3 ((benchlab_temperature_source) 3)
+#define benchlab_temperature_source_sensor4 ((benchlab_temperature_source) 4)
+#define benchlab_temperature_source_ambient ((benchlab_temperature_source) 5)
 #endif /* defined(__cplusplus) */
 
 //
