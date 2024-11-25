@@ -20,6 +20,9 @@
 #define _TCHAR char
 #endif /* defined(_WIN32) */
 
+#include "libbenchlab/benchlab.h"
+
+
 #if 0
 /// <summary>
 /// A callback to receive the samples from the device.
@@ -82,17 +85,15 @@ void on_sample(_In_ powenetics_handle src,
 /// <param name="argv">The list of command line arguments.</param>
 /// <returns>Zero, unconditionally.</returns>
 int _tmain(int argc, _TCHAR **argv) {
-    benchlab_serial_configuration config;
     benchlab_handle handle = NULL;
     HRESULT hr = S_OK;
 
-#if false
     // Initialisation phase: either open the user-defined port or probe for one
     // Powenetics device attached to the machine.
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
             size_t cnt = 1;
-            hr = powenetics_probe(&handle, &cnt);
+            hr = benchlab_probe(&handle, &cnt);
 
             // For the demo, we can live with having only one device, so if the
             // error indicates that there would be more, we just ignore that.
@@ -101,11 +102,12 @@ int _tmain(int argc, _TCHAR **argv) {
             }
 
         } else {
-            hr = powenetics_open(&handle, argv[1], NULL);
+            hr = benchlab_open(&handle, argv[1], NULL);
         }
     }
     assert((handle != NULL) || FAILED(hr));
 
+#if false
     // Calibrate the device.
     if (SUCCEEDED(hr)) {
         //hr = powenetics_calibrate(handle);

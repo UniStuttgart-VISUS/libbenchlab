@@ -34,15 +34,10 @@ target_include_directories(${PROJECT_NAME}
         $<BUILD_INTERFACE:${SourceDirectory}>)
 
 if (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SetupAPI)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SetupAPI WIL)
 else ()
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-endif ()
-
-if (BENCHLAB_UseUdev)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
-    target_link_libraries(${PROJECT_NAME} PRIVATE udev)
 endif ()
 
 

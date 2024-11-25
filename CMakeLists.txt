@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.18.0)
 project(benchlab)
 
 include(CMakeDependentOption)
+include(FetchContent)
 
 
 # User-configurable options
@@ -13,6 +14,26 @@ include(CMakeDependentOption)
 option(BENCHLAB_BuildCclient "Build the C-style test client" ON)
 #cmake_dependent_option(POWENETICS_BuildExcellentPowenetics "Build the excellent demo programme" ON WIN32 OFF)
 #cmake_dependent_option(POWENETICS_UseUdev "Use libudev to enumerate serial devices" OFF UNIX OFF)
+
+
+# Windows Implementation Library
+FetchContent_Declare(wil
+    URL "https://codeload.github.com/microsoft/wil/zip/refs/tags/v1.0.240803.1"
+)
+option(FAST_BUILD "" OFF)
+option(WIL_BUILD_PACKAGING "" OFF)
+option(WIL_BUILD_TESTS "" OFF)
+FetchContent_GetProperties(wil)
+if (NOT wil_POPULATED)
+    FetchContent_Populate(wil)
+    add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif ()
+mark_as_advanced(FORCE
+    FETCHCONTENT_SOURCE_DIR_WIL
+    FETCHCONTENT_UPDATES_DISCONNECTED_WIL
+    FAST_BUILD
+    WIL_BUILD_PACKAGING
+    WIL_BUILD_TESTS)
 
 
 #  Global compiler options, which are derived from the settings above.

@@ -13,6 +13,13 @@
 #include <thread>
 #include <vector>
 
+#if defined(_WIN32)
+#include <Windows.h>
+
+#include <wil/resource.h>
+#include <wil/registry.h>
+#endif /* defined(_WIN32) */
+
 #include "libbenchlab/serial.h"
 #include "libbenchlab/types.h"
 
@@ -30,6 +37,8 @@ public:
     /// The type of the unique device ID.
     /// </summary>
     typedef GUID uid_type;
+
+    template<class TIterator> static HRESULT ports(_In_ TIterator oit);
 
     benchlab_device(void) noexcept;
 
@@ -234,3 +243,5 @@ private:
     std::chrono::milliseconds _timeout;
     std::uint8_t _version;
 };
+
+#include "device.inl"

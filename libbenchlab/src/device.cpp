@@ -282,7 +282,7 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
         return hr;
     }
 
-    std::array<char, 3> response{ 0 };
+    std::array<std::uint8_t, 3> response{ 0 };
     hr = this->read(response, this->_timeout);
     if (FAILED(hr)) {
         return hr;
@@ -302,7 +302,9 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
  * benchlab_device::check_welcome
  */
 HRESULT benchlab_device::check_welcome(void) const noexcept {
-    static constexpr const char *const expected = "BENCHLAB";
+    static constexpr std::array<char, 9> expected = {
+        'B', 'E', 'N', 'C', 'H', 'L', 'A', 'B', '\0'
+    };
 
     auto hr = this->write(command::welcome);
     if (FAILED(hr)) {
@@ -315,7 +317,7 @@ HRESULT benchlab_device::check_welcome(void) const noexcept {
         return hr;
     }
 
-    if (!std::equal(expected, expected + sizeof(expected),
+    if (!std::equal(expected.begin(), expected.end(),
             response.begin(), response.end())) {
         return E_NOTIMPL;
     }
