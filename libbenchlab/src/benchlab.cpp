@@ -107,6 +107,65 @@ HRESULT LIBBENCHLAB_API benchlab_get_firmware(
     return S_OK;
 }
 
+
+/*
+ * benchlab_get_power_sensors
+ */
+HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
+        _Out_writes_opt_(*cnt) benchlab_char *out_sensors,
+        _Inout_ size_t *cnt) {
+    typedef std::char_traits<benchlab_char> traits_type;
+    static constexpr const benchlab_char *const names[] = {
+        BENCHLAB_STR("EPS1"),
+        BENCHLAB_STR("EPS2"),
+        BENCHLAB_STR("ATX3V"),
+        BENCHLAB_STR("ATX5V"),
+        BENCHLAB_STR("ATX5VSB"),
+        BENCHLAB_STR("ATX12V"),
+        BENCHLAB_STR("PCIE1"),
+        BENCHLAB_STR("PCIE2"),
+        BENCHLAB_STR("PCIE3"),
+        BENCHLAB_STR("HPWR1"),
+        BENCHLAB_STR("HPWR2")
+    };
+    static_assert(std::size(names) == BENCHLAB_POWER_SENSORS, "Names are "
+        "provided for all power sensors.");
+
+    if (cnt == nullptr) {
+        return E_POINTER;
+    }
+
+    if ((*cnt > 0) && (out_sensors == nullptr)) {
+        return E_POINTER;
+    }
+
+    // Determine how many characters we need for all the names as multi-sz
+    // string.
+    std::size_t required = 1;
+    for (auto n : names) {
+        required += traits_type::length(n) + 1;
+    }
+
+    // If the user buffer is not big enough, report the required size and bail
+    // out with an appropriate error.
+    if (*cnt < required) {
+        *cnt = required;
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    }
+
+    // The output buffer is valid and large enough, so we actually copy the
+    // strings.
+    *cnt = required;
+    auto dst = out_sensors;
+    for (auto n : names) {
+        while ((*dst++ = *n++));
+    }
+    *dst = static_cast<benchlab_char>(0);
+
+    return S_OK;
+}
+
+
 /*
  * ::benchlab_open
  */

@@ -32,8 +32,10 @@
 /// </summary>
 #if defined(_WIN32)
 typedef wchar_t benchlab_char;
+#define BENCHLAB_STR(s) L##s
 #else /* defined(_WIN32) */
 typedef char benchlab_char;
+#define BENCHLAB_STR(s) s
 #endif /* defined(_WIN32) */
 
 
@@ -307,7 +309,22 @@ typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
 } benchlab_sensor_readings;
 
 
-struct powenetics_sample_t;
+/// <summary>
+/// Represents the post-processed sensor readings derived from
+/// <see cref="benchlab_sensor_readings" />.
+/// </summary>
+typedef struct LIBBENCHLAB_API benchlab_sample_t {
+    float input_voltage[BENCHLAB_VIN_SENSORS];
+    float supply_voltage;
+    float reference_voltage;
+    float chip_temperature;
+    float temperatures[BENCHLAB_TEMPERATURE_SENSORS];
+    float ambient_temperature;
+    float humidity;
+    float voltages[BENCHLAB_POWER_SENSORS];
+    float currents[BENCHLAB_POWER_SENSORS];
+    float power[BENCHLAB_POWER_SENSORS];
+} benchlab_sample;
 
 /// <summary>
 /// The callback to be invoked when a new sample arrives.

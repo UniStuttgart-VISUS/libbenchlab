@@ -42,7 +42,8 @@ HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle);
 /// <summary>
 /// Gets the user-defined device name of the Benchlab device.
 /// </summary>
-/// <param name="out_name">Receives the name of the device.</param>
+/// <param name="out_name">Receives the name of the device, which is
+/// ASCII-encoded.</param>
 /// <param name="cnt">On entry, the number of characters that can be written
 /// to <paramref name="out_name" />. On exit, the required number of characters
 /// for the device name.</param>
@@ -74,6 +75,23 @@ HRESULT LIBBENCHLAB_API benchlab_get_device_uid(
 HRESULT LIBBENCHLAB_API benchlab_get_firmware(
     _Out_ uint8_t *out_version,
     _In_ benchlab_handle handle);
+
+/// <summary>
+/// Gets the names of the power sensors available as a multi-sz string.
+/// </summary>
+/// <param name="out_sensors">A buffer to receive the multi-sz string of the
+/// sensor names. The buffer must be able to hold at least
+/// <paramref name="cnt" /> characters if not <c>nullptr</c>.</param>
+/// <param name="cnt">On entry, the number of characters in
+/// <parmaref name="out_sensors" />, on exit the number of characters of the
+/// actual names. If this parameter is non-zero on entry, a valid buffer must
+/// be provided for <paramref name="out_sensors" />.</param>
+/// <returns><c>S_OK</c> in case of success,
+/// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if the buffer was too
+/// small to hold all sensor names.</returns>
+HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
+    _Out_writes_opt_(*cnt) benchlab_char *out_sensors,
+    _Inout_ size_t *cnt);
 
 /// <summary>
 /// Opens a handle to the Benchöab telemetry system connected to the specified

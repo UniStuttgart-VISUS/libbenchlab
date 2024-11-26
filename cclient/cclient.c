@@ -157,6 +157,14 @@ int _tmain(int argc, _TCHAR **argv) {
         //hr = benchlab_button_press(handle, benchlab_button_power, 200);
     }
 
+    {
+        size_t s = 0;
+        benchlab_get_power_sensors(NULL, &s);
+        benchlab_char *ss = malloc(s * sizeof(benchlab_char));
+        benchlab_get_power_sensors(ss, &s);
+        int x = 0;
+    }
+
 #if false
     // Calibrate the device.
     if (SUCCEEDED(hr)) {

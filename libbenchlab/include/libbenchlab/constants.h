@@ -73,4 +73,4 @@ constexpr int BENCHLAB_RGB_PROFILES = 2;
 //public const int CAL_FACTORY = 0;
 //public const int CAL_USER = 1;
 
-//readonly string[] PowerSensorNames = { "EPS1", "EPS2", "ATX3V", "ATX5V", "ATX5VSB", "ATX12V", "PCIE1", "PCIE2", "PCIE3", "HPWR1", "HPWR2" };
+
