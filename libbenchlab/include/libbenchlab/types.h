@@ -21,6 +21,7 @@
 
 #include "libbenchlab/api.h"
 #include "libbenchlab/constants.h"
+#include "libbenchlab/timestamp.h"
 
 #if !defined(_WIN32)
 #include "libbenchlab/linuxhresult.h"
@@ -48,16 +49,6 @@ typedef char benchlab_char;
 #define LIBBENCHLAB_ENUM
 #define LIBBENCHLAB_ENUM_SCOPE(scope, field) scope##_##field
 #endif /* defined(__cplusplus) */
-
-//#if defined(__cplusplus)
-//#define LIBBENCHLAB_BEGIN_TYPED_ENUM(name, type) enum class name : type {
-//#define LIBBENCHLAB_TYPED_ENUM_VALUE(name, value) name = value,
-//#define LIBBENCHLAB_END_TYPED_ENUM(name, type) };
-//#else /* defined(__cplusplus) */
-//#define LIBBENCHLAB_BEGIN_TYPED_ENUM(name, type) typedef type name;
-//#define LIBBENCHLAB_TYPED_ENUM_VALUE(name, value) name = value,
-//#define LIBBENCHLAB_END_TYPED_ENUM(name, type)
-//#endif /* defined(__cplusplus) */
 
 
 /// <summary>
@@ -303,7 +294,7 @@ typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
     benchlab_fan_switch_status fan_switch;
     benchlab_rgb_switch_status rgb_switch;
     benchlab_rgb_extended_status rgb_extended_status;
-    uint8_t fan_extended_duty;
+    uint8_t external_fan_duty;
     benchlab_power_reading power_readings[BENCHLAB_POWER_SENSORS];
     benchlab_fan_reading fans[BENCHLAB_FANS];
 } benchlab_sensor_readings;
@@ -314,6 +305,7 @@ typedef struct LIBBENCHLAB_API benchlab_sensor_readings_t {
 /// <see cref="benchlab_sensor_readings" />.
 /// </summary>
 typedef struct LIBBENCHLAB_API benchlab_sample_t {
+    benchlab_timestamp timestamp;
     float input_voltage[BENCHLAB_VIN_SENSORS];
     float supply_voltage;
     float reference_voltage;
@@ -321,13 +313,19 @@ typedef struct LIBBENCHLAB_API benchlab_sample_t {
     float temperatures[BENCHLAB_TEMPERATURE_SENSORS];
     float ambient_temperature;
     float humidity;
+    uint8_t external_fan_duty;
     float voltages[BENCHLAB_POWER_SENSORS];
     float currents[BENCHLAB_POWER_SENSORS];
     float power[BENCHLAB_POWER_SENSORS];
+    uint16_t fan_speeds[BENCHLAB_FANS];
+    uint8_t fan_duties[BENCHLAB_FANS];
 } benchlab_sample;
+
 
 /// <summary>
 /// The callback to be invoked when a new sample arrives.
 /// </summary>
-typedef void (*powenetics_data_callback)(_In_ benchlab_handle source,
-    _In_ const struct powenetics_sample_t *sample, _In_opt_ void *context);
+typedef void (*benchlab_data_callback)(
+    _In_ benchlab_handle source,
+    _In_ const benchlab_sample *sample,
+    _In_opt_ void *context);

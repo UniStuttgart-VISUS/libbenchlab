@@ -108,7 +108,7 @@ HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
 /// configuration by calling
 /// <see cref="benchlab_initialise_serial_configuration" />.</param>
 /// <returns><c>S_OK</c> in case of success,
-/// <c>E_POINTER> if <paramref name="out_handle "/> is <c>nullptr</c>,
+/// <c>E_POINTER</c> if <paramref name="out_handle "/> is <c>nullptr</c>,
 /// <c>E_INVALIDARG</c> if <paramref name="com_port" /> is <c>nullptr</c>,
 /// <c>E_NOT_VALID_STATE</c> if the device has already been opened
 /// before, a platform-specific error code if accessing the selected
@@ -116,6 +116,22 @@ HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
 HRESULT LIBBENCHLAB_API benchlab_open(_Out_ benchlab_handle *out_handle,
     _In_z_ const benchlab_char *com_port,
     _In_opt_ const benchlab_serial_configuration *config);
+
+/// <summary>
+/// Convert the given sensor <paramref name="readings" /> to a sample using
+/// Volts, Amperes and Watts rather than the internal units.
+/// </summary>
+/// <param name="out_sample">A pointer to the sample to be filled.</param>
+/// <param name="readings">A pointer to the sensor readings to be converted.
+/// </param>
+/// <param name="timestamp">An optional timestamp to be set in the sample. If
+/// this parameter is <c>nullptr</c>, the function will create a new timestamp
+/// from the current system time.</param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
+    _Out_ benchlab_sample *out_sample,
+    _In_ const benchlab_sensor_readings *readings,
+    _In_opt_ const benchlab_timestamp *timestamp);
 
 /// <summary>
 /// Opens at most <paramref name="cnt" /> Benchlab telemetry devices connected
@@ -128,7 +144,7 @@ HRESULT LIBBENCHLAB_API benchlab_open(_Out_ benchlab_handle *out_handle,
 /// actually been saved.</param>
 /// <returns><c>S_OK</c> in case the operation succeeded,
 /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there were more
-/// devices than could be stored to <paramref name="out_handles" />, 
+/// devices than could be stored to <paramref name="out_handles" />,
 /// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
 /// was found, another error code if establishing the connection to the
 /// device failed.</returns>

@@ -139,6 +139,9 @@ int _tmain(int argc, _TCHAR **argv) {
         benchlab_sensor_readings readings;
         hr = benchlab_read_sensors(&readings, handle);
 
+        benchlab_sample sample;
+        hr = benchlab_readings_to_sample(&sample, &readings, NULL);
+        
         benchlab_rgb_config rgb_config;
         hr = benchlab_read_rgb(&rgb_config, handle, 0);
 

@@ -11,6 +11,8 @@
 #include <cstring>
 #include <limits>
 
+#include "debug.h"
+
 
 /*
  * benchlab_device::benchlab_device
@@ -105,8 +107,8 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
     assert(config != nullptr);
 
     if (this->_handle != invalid_handle) {
-        //_powenetics_debug("Tried opening a powenetics_device that is already "
-        //    "connected...\r\n");
+        _benchlab_debug("Tried opening a benchlab_device that is already "
+            "connected...\r\n");
         return E_NOT_VALID_STATE;
     }
 
@@ -118,7 +120,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         nullptr, OPEN_EXISTING, 0, NULL);
     if (this->_handle == invalid_handle) {
         auto retval = HRESULT_FROM_WIN32(::GetLastError());
-        //_powenetics_debug("CreateFile on COM port failed.\r\n");
+        _benchlab_debug("CreateFile on COM port failed.\r\n");
         return retval;
     }
 
@@ -128,7 +130,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
 
         if (!::GetCommState(this->_handle, &dcb)) {
             auto retval = HRESULT_FROM_WIN32(::GetLastError());
-            //_powenetics_debug("Retrieving state of COM port failed.\r\n");
+            _benchlab_debug("Retrieving state of COM port failed.\r\n");
             return retval;
         }
 
@@ -159,7 +161,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
 
         if (!::SetCommState(this->_handle, &dcb)) {
             auto retval = HRESULT_FROM_WIN32(::GetLastError());
-            //_powenetics_debug("Updating state of COM port failed.\r\n");
+            _benchlab_debug("Updating state of COM port failed.\r\n");
             return retval;
         }
     }
@@ -192,6 +194,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         }
 
         if (!::SetCommTimeouts(this->_handle, &cto)) {
+            _benchlab_debug("Setting COM timeouts failed.\r\n");
             return HRESULT_FROM_WIN32(::GetLastError());
         }
     }
@@ -202,6 +205,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
     {
         auto hr = this->check_welcome();
         if (FAILED(hr)) {
+            _benchlab_debug("Welcome check with device failed.\r\n");
             this->close();
             return hr;
         }
@@ -210,6 +214,8 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
     {
         auto hr = this->check_vendor_data();
         if (FAILED(hr)) {
+            _benchlab_debug("Retrieval of basic hardware information "
+                "failed.\r\n");
             this->close();
             return hr;
         }
@@ -471,8 +477,10 @@ HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
         nullptr)) {
         cnt = read;
         return S_OK;
+
     } else {
         cnt = 0;
+        _benchlab_debug("I/O erro while reading from COM.\r\n");
         return HRESULT_FROM_WIN32(::GetLastError());
     }
 
@@ -480,6 +488,7 @@ HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
     cnt = ::read(this->_handle, dst, cnt);
     if (cnt < 0) {
         cnt = 0;
+        _benchlab_debug("I/O erro while reading from COM.\r\n");
         return static_cast<HRESULT>(-errno);
     } else {
         return S_OK;
@@ -552,8 +561,7 @@ HRESULT benchlab_device::write(_In_reads_bytes_(cnt) const void *data,
     }
 
     auto retval = HRESULT_FROM_WIN32(::GetLastError());
-    //_powenetics_debug("I/O error while sending a command to Powenetics "
-    //    "v2 device.\r\n");
+    _benchlab_debug("I/O error while writing to COM port.\r\n");
     return retval;
 
 #else /* defined(_WIN32) */
@@ -565,8 +573,7 @@ HRESULT benchlab_device::write(_In_reads_bytes_(cnt) const void *data,
 
         if (written < 0) {
             auto hr = static_cast<HRESULT>(-errno);
-            //_powenetics_debug("I/O error while sending a command to Powenetics "
-            //    "v2 device.\r\n");
+            _benchlab_debug("I/O error while writing to COM port.\r\n");
             return hr;
         }
 
