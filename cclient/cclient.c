@@ -14,11 +14,15 @@
 #include <objbase.h>
 #include <Windows.h>
 #include <tchar.h>
+
+#define STR_FMT "%ls"
 #else /* defined(_WIN32) */
 #include <unistd.h>
 
 #define _tmain main
 #define _TCHAR char
+
+#define STR_FMT "%s"
 #endif /* defined(_WIN32) */
 
 #include "libbenchlab/benchlab.h"
@@ -34,6 +38,7 @@ void on_sample(_In_ benchlab_handle src,
         _In_ const benchlab_sample *sample,
         _In_opt_ void *ctx) {
     benchlab_char *sensors = (benchlab_char *) ctx;
+    _Analysis_assume_(sensors != NULL);
 
     for (size_t i = 0; i < BENCHLAB_VIN_SENSORS; ++i) {
         printf("Input voltage #%zu: %f V\r\n", i, sample->input_voltage[i]);
@@ -51,10 +56,15 @@ void on_sample(_In_ benchlab_handle src,
     printf("Humidity: %f %%\r\n", sample->humidity);
     printf("External fan duty: %hhu\r\n", sample->external_fan_duty);
 
+    benchlab_char *sensor = sensors;
     for (size_t i = 0; i < BENCHLAB_POWER_SENSORS; ++i) {
-        printf("Voltage #%zu: %f V\r\n", i, sample->voltages[i]);
-        printf("Current #%zu: %f A\r\n", i, sample->currents[i]);
-        printf("Power #%zu: %f W\r\n", i, sample->power[i]);
+        printf("Voltage #%zu (" STR_FMT "): %f V\r\n",
+            i, sensor, sample->voltages[i]);
+        printf("Current #%zu (" STR_FMT "): %f A\r\n",
+            i, sensor, sample->currents[i]);
+        printf("Power #%zu (" STR_FMT "): %f W\r\n",
+            i, sensor, sample->power[i]);
+        while (*sensor++ != 0);
     }
 
     for (size_t i = 0; i < BENCHLAB_FANS; ++i) {
