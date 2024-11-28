@@ -87,13 +87,13 @@ void on_sample(benchlab_handle src, const benchlab_sample *sample, void *ctx) {
 Streaming is stopped by:
 ```c++
 {
-    auto hr = benchlab_stop_streaming(handle);
+    auto hr = ::benchlab_stop_streaming(handle);
     if (FAILED(hr)) { /* Handle the error. */ }
 }
 ```
 
 > [!WARNING]
-> You cannot use any synchronous APIs accessing the hardware while the device is streaming.
+> You cannot use any synchronous APIs accessing the hardware while the device is streaming! Check the documentation of the public functions for further notes.
 
 ## Demo programmes
 ### cclient
