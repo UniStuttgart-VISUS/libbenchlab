@@ -18,6 +18,10 @@ extern "C" {
 /// Press the specified <paramref name="button" /> for the given
 /// <pararmef name="duration" /> in milliseconds.
 /// </summary>
+/// <remarks>
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// </remarks>
 /// <param name="handle">The handle of the device to press the button of.
 /// </param>
 /// <param name="button">The button to be pressed.</param>
@@ -42,6 +46,10 @@ HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle);
 /// <summary>
 /// Gets the user-defined device name of the Benchlab device.
 /// </summary>
+/// <remarks>
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// </remarks>
 /// <param name="out_name">Receives the name of the device, which is
 /// ASCII-encoded.</param>
 /// <param name="cnt">On entry, the number of characters that can be written
@@ -57,6 +65,10 @@ HRESULT LIBBENCHLAB_API benchlab_get_device_name(
 /// <summary>
 /// Retrieve the unique hardware ID of the Benchlab.
 /// </summary>
+/// <remarks>
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// </remarks>
 /// <param name="out_uid">Receives the hardware GUID of the device.</param>
 /// <param name="handle">The handle of the device to retrieve the GUID of.
 /// </param>
@@ -155,6 +167,10 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
 /// <summary>
 /// Read a RGB profile from the Benchlab.
 /// </summary>
+/// <remarks>
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// </remarks>
 /// <param name="out_config">Receives the current RGB configuration in case of
 /// success.</param>
 /// <param name="handle">The handle of the device to get the configuration from.
@@ -170,8 +186,13 @@ HRESULT LIBBENCHLAB_API benchlab_read_rgb(
 /// Performs a raw read of sensor data from the given Benchlab device.
 /// </summary>
 /// <remarks>
-/// It is not recommended to perform raw reads as the sensor readings contain the
-/// internal representation of the sensor data rather than in ready-to-use units.
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// <para>It is not recommended to perform raw reads as the sensor readings
+/// contain the internal representation of the sensor data rather than
+/// in ready-to-use units. Put the device in streaming mode instead. If you
+/// need to use raw samples, <see cref="benchlab_readings_to_sample" /> can be
+/// used to convert the data.</para>
 /// </remarks>
 /// <param name="out_readings">Receives the sensor readings.</param>
 /// <param name="handle">The handle for the device.</param>
@@ -183,6 +204,32 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
     _Out_ benchlab_sensor_readings *out_readings,
     _In_ benchlab_handle handle);
 
+/// <summary>
+/// Starts asynchronously streaming data from a Benchlab device to
+/// <paramref name="callback" /> every <paramref name="period" /> milliseconds.
+/// </summary>
+/// <param name="handle"></param>
+/// <param name="period"></param>
+/// <param name="callback"></param>
+/// <param name="context"></param>
+/// <returns></returns>
+HRESULT LIBBENCHLAB_API benchlab_start_streaming(
+    _In_ const benchlab_handle handle,
+    _In_ const size_t period,
+    _In_ const benchlab_sample_callback callback,
+    _In_opt_ void *context);
+
+/// <summary>
+/// Updates the RGB configuration of the given Benchlab device.
+/// </summary>
+/// <remarks>
+/// <para>This function cannot be called while the device is asynchronously
+/// streaming measurement data.</para>
+/// </remarks>
+/// <param name="handle"></param>
+/// <param name="config"></param>
+/// <param name="profile"></param>
+/// <returns></returns>
 HRESULT LIBBENCHLAB_API benchlab_write_rgb(
     _In_ benchlab_handle handle,
     _In_ const benchlab_rgb_config *config,

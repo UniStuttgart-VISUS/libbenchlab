@@ -11,6 +11,8 @@
 #include <cstring>
 #include <limits>
 
+#include "libbenchlab/benchlab.h"
+
 #include "debug.h"
 
 
@@ -20,6 +22,7 @@
 benchlab_device::benchlab_device(void) noexcept
         : _command_sleep(10),
         _handle(invalid_handle),
+        _state(stream_state::stopped),
         _timeout(0),
         _version(0) { }
 
@@ -29,6 +32,13 @@ benchlab_device::benchlab_device(void) noexcept
  */
 benchlab_device::~benchlab_device(void) noexcept {
     this->close();
+    // Note: closing the handle will cause the thread to exit with an I/O error,
+    // so we do not need to set the state here (it cannot be used anyway,
+    // because we are about to destroy the variable).
+
+    if (this->_thread.joinable()) {
+        this->_thread.join();
+    }
 }
 
 
@@ -55,22 +65,28 @@ HRESULT benchlab_device::close(void) noexcept {
  * benchlab_device::name
  */
 HRESULT benchlab_device::name(_Out_ std::vector<char>& name) const noexcept {
-    auto hr = this->check_handle();
-    if (FAILED(hr)) {
-        return hr;
+    {
+        auto hr = this->check_stopped();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    hr = this->write(command::read_name);
-    if (FAILED(hr)) {
-        return hr;
+    {
+        auto hr = this->write(command::read_name);
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
     this->command_sleep();
-
     name.resize(32);
-    hr = this->read(name, this->_timeout);
-    if (FAILED(hr)) {
-        return hr;
+
+    {
+        auto hr = this->read(name, this->_timeout);
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
     // Erase the padding at the end.
@@ -86,6 +102,13 @@ HRESULT benchlab_device::name(_Out_ std::vector<char>& name) const noexcept {
  */
 HRESULT benchlab_device::name(_In_ const std::string& name) noexcept {
     std::array<char, 32> parameter { 0 };
+
+    {
+        auto hr = this->check_stopped();
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
 
     // Make sure that we have exactly 32 ASCII characters to send to the device.
     if (name.size() > parameter.size()) {
@@ -233,6 +256,13 @@ HRESULT benchlab_device::press(_In_ const benchlab_button button,
     constexpr std::chrono::milliseconds unit(100);
     constexpr std::chrono::microseconds::rep one = 1;
 
+    {
+        auto hr = this->check_stopped();
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
     // Arguments are: type of the action, the button, 1/0 for press/release, the
     // duration in 100 ms units.
     std::array<std::uint8_t, 4> parameters{
@@ -254,7 +284,7 @@ HRESULT benchlab_device::read(
         _In_ const std::uint8_t profile,
         _In_ const std::uint8_t fan) const noexcept {
     {
-        auto hr = this->check_handle();
+        auto hr = this->check_stopped();
         if (FAILED(hr)) {
             return hr;
         }
@@ -291,7 +321,7 @@ HRESULT benchlab_device::read(
         _Out_ benchlab_rgb_config& config,
         _In_ const std::uint8_t profile) const noexcept {
     {
-        auto hr = this->check_handle();
+        auto hr = this->check_stopped();
         if (FAILED(hr)) {
             return hr;
         }
@@ -319,21 +349,80 @@ HRESULT benchlab_device::read(
  */
 HRESULT benchlab_device::read(
         _Out_ benchlab_sensor_readings& readings) const noexcept {
-    auto hr = this->check_handle();
-    if (FAILED(hr)) {
-        return hr;
+    {
+        auto hr = this->check_stopped();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    hr = this->write(command::read_sensors);
-    if (FAILED(hr)) {
-        return hr;
+    return this->unchecked_read(readings);
+}
+
+
+/*
+ * benchlab_device::start
+ */
+HRESULT benchlab_device::start(_In_ const benchlab_sample_callback callback,
+        _In_opt_ void *context,
+        _In_ const std::chrono::milliseconds period) noexcept {
+    {
+        // Do not start a sampler if the handle is invalid in the first place.
+        auto hr = this->check_handle();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    this->command_sleep();
+    {
+        auto expected = stream_state::stopped;
+        auto succeeded = this->_state.compare_exchange_strong(expected,
+            stream_state::starting, std::memory_order::memory_order_acq_rel);
+        assert(!this->_thread.joinable() || !succeeded);
+        if (!succeeded) {
+            _benchlab_debug("The Benchlab device is already streaming data or "
+                "it is ain a transitional state.\r\n");
+            return E_NOT_VALID_STATE;
+        }
+    }
 
-    hr = this->read(&readings, sizeof(readings), this->_timeout);
+    assert(!this->_thread.joinable());
+    this->_thread = std::thread(&benchlab_device::stream, this,
+        callback,
+        context,
+        period);
 
-    return hr;
+    return S_OK;
+}
+
+
+/*
+ * benchlab_device::stop
+ */
+HRESULT benchlab_device::stop(void) noexcept {
+    // Note: we do not check 'retval' here, because the sampler thread is not
+    // dependent on the handle and we want it to exit under any circumstance.
+    {
+        auto expected = stream_state::running;
+        auto succeeded = this->_state.compare_exchange_strong(expected,
+            stream_state::stopping,
+            std::memory_order::memory_order_acq_rel);
+
+        // Return the error only if it does not mask a previous one.
+        if (!succeeded) {
+            _benchlab_debug("An attempt to stop streaming data was made on a "
+                "device that was not streaming data in the first place.\n\n");
+            return E_NOT_VALID_STATE;
+        }
+    }
+
+    // Our contract states that the sampler thread must not run anymore once the
+    // methods exits, so we wait for the thread to exit.
+    if (this->_thread.joinable()) {
+        this->_thread.join();
+    }
+
+    return S_OK;
 }
 
 
@@ -344,25 +433,33 @@ HRESULT benchlab_device::uid(
         _Out_ benchlab_device_uid_type& uid) const noexcept {
     ::memset(&uid, 0, sizeof(uid));
 
-    auto hr = this->check_handle();
-    if (FAILED(hr)) {
-        return hr;
+    {
+        auto hr = this->check_stopped();
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
-    hr = this->write(command::read_uid);
-    if (FAILED(hr)) {
-        return hr;
+    {
+        auto hr = this->write(command::read_uid);
+        if (FAILED(hr)) {
+            return hr;
+        }
     }
 
     this->command_sleep();
 
-    std::array<std::uint8_t, 12> response;  // sic.
-    hr = this->read(response, this->_timeout);
-    if (FAILED(hr)) {
-        return hr;
+    {
+        std::array<std::uint8_t, 12> response;  // sic.
+
+        auto hr = this->read(response, this->_timeout);
+        if (FAILED(hr)) {
+            return hr;
+        }
+
+        ::memcpy(&uid, response.data(), response.size());
     }
 
-    ::memcpy(&uid, response.data(), response.size());
     return S_OK;
 }
 
@@ -374,7 +471,7 @@ HRESULT benchlab_device::write(
         _In_ const benchlab_rgb_config& config,
         _In_ const std::uint8_t profile) noexcept {
     {
-        auto hr = this->check_handle();
+        auto hr = this->check_stopped();
         if (FAILED(hr)) {
             return hr;
         }
@@ -433,6 +530,22 @@ HRESULT benchlab_device::check_vendor_data(void) noexcept {
 
 
 /*
+ * benchlab_device::check_stopped
+ */
+HRESULT benchlab_device::check_stopped(void) const noexcept {
+    const auto s = this->_state.load(std::memory_order::memory_order_acquire);
+    const auto succeeded = (s == stream_state::stopped);
+
+    if (!succeeded) {
+        _benchlab_debug("The Benchlab sampler thread is either running or in a "
+            "transitional state.\r\n");
+    }
+
+    return succeeded ? S_OK : E_NOT_VALID_STATE;
+}
+
+
+/*
  * benchlab_device::check_welcome
  */
 HRESULT benchlab_device::check_welcome(void) const noexcept {
@@ -467,7 +580,6 @@ HRESULT benchlab_device::check_welcome(void) const noexcept {
  */
 HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
         _Inout_ std::size_t& cnt) const noexcept {
-    assert(this->_handle != invalid_handle);
     assert(dst != nullptr);
 
 #if defined(_WIN32)
@@ -503,7 +615,6 @@ HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
 HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
         _In_ const std::size_t cnt,
         _In_ const std::chrono::milliseconds timeout) const noexcept {
-    assert(this->_handle != invalid_handle);
     assert(dst != nullptr);
 
     auto cur = static_cast<std::uint8_t *>(dst);
@@ -538,11 +649,74 @@ HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
 
 
 /*
+ * benchlab_device::stream
+ */
+void benchlab_device::stream(_In_ const benchlab_sample_callback callback,
+        _In_opt_ void *context,
+        _In_ const std::chrono::milliseconds period) {
+    assert(callback != nullptr);
+
+    benchlab_sensor_readings readings;
+    benchlab_sample sample;
+    //set_thread_name("powenetics sampler");
+
+    // Signal to everyone that we are now running. If this fails (with a strong
+    // CAS), someone else has manipulated the '_state' variable in the meantime.
+    // This is illegal. No one may change the state during startup except for
+    // the sampler thread itself at this very point.
+    {
+        auto expected = stream_state::starting;
+        if (!this->_state.compare_exchange_strong(expected,
+            stream_state::running,
+            std::memory_order::memory_order_acq_rel)) {
+            _benchlab_debug("The state of the Benchlab sampler thread was "
+                "manipulated during startup.\r\n");
+            std::abort();
+        }
+    }
+
+    auto deadline = std::chrono::steady_clock::now() + period;
+
+    while (this->check_running() && SUCCEEDED(this->unchecked_read(readings))) {
+        ::benchlab_readings_to_sample(&sample, &readings, nullptr);
+        callback(this, &sample, context);
+        std::this_thread::sleep_until(deadline);
+        deadline = std::chrono::steady_clock::now() + period;
+    }
+
+    // Indicate that we are done. We do not CAS this from
+    // stream_state::stopping, because a request for orderly shutdown is only
+    // one way we can get here, the file handle being closed and the I/O failing
+    // being the other one. In the latter case, the state will still be
+    // stream_state::running at this point.
+    this->_state.store(stream_state::stopped,
+        std::memory_order::memory_order_release);
+}
+
+
+/*
+ * benchlab_device::unchecked_read
+ */
+HRESULT benchlab_device::unchecked_read(
+        _Out_ benchlab_sensor_readings &readings) const noexcept {
+    {
+        auto hr = this->write(command::read_sensors);
+        if (FAILED(hr)) {
+            return hr;
+        }
+    }
+
+    this->command_sleep();
+
+    return this->read(&readings, sizeof(readings), this->_timeout);
+}
+
+
+/*
  * benchlab_device::write
  */
 HRESULT benchlab_device::write(_In_reads_bytes_(cnt) const void *data,
         _In_ const std::size_t cnt) const noexcept {
-    assert(this->_handle != invalid_handle);
     assert(data != nullptr);
 
 #if defined(_WIN32)

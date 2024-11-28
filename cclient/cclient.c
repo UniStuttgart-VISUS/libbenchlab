@@ -24,54 +24,45 @@
 #include "libbenchlab/benchlab.h"
 
 
-#if 0
 /// <summary>
 /// A callback to receive the samples from the device.
 /// </summary>
 /// <param name="src"></param>
 /// <param name="sample"></param>
 /// <param name="ctx"></param>
-void on_sample(_In_ powenetics_handle src,
-        _In_ const powenetics_sample *sample,
+void on_sample(_In_ benchlab_handle src,
+        _In_ const benchlab_sample *sample,
         _In_opt_ void *ctx) {
-    printf("ATX 12V: %f V, %f A\r\n",
-        sample->atx_12v.voltage,
-        sample->atx_12v.current);
-    printf("ATX 3.3V: %f V, %f A\r\n",
-        sample->atx_3_3v.voltage,
-        sample->atx_3_3v.current);
-    printf("ATX 5V: %f V, %f A\r\n",
-        sample->atx_5v.voltage,
-        sample->atx_5v.current);
-    printf("ATX Stand-by: %f V, %f A\r\n",
-        sample->atx_stb.voltage,
-        sample->atx_stb.current);
-    printf("EPS #1: %f V, %f A\r\n",
-        sample->eps1.voltage,
-        sample->eps1.current);
-    printf("EPS #2: %f V, %f A\r\n",
-        sample->eps2.voltage,
-        sample->eps2.current);
-    printf("EPS #3: %f V, %f A\r\n",
-        sample->eps3.voltage,
-        sample->eps3.current);
-    printf("PCIe 12V #1: %f V, %f A\r\n",
-        sample->pcie_12v1.voltage,
-        sample->pcie_12v1.current);
-    printf("PCIe 12V #2: %f V, %f A\r\n",
-        sample->pcie_12v2.voltage,
-        sample->pcie_12v2.current);
-    printf("PCIe 12V #3: %f V, %f A\r\n",
-        sample->pcie_12v3.voltage,
-        sample->pcie_12v3.current);
-    printf("PEG 12V: %f V, %f A\r\n",
-        sample->peg_12v.voltage,
-        sample->peg_12v.current);
-    printf("PEG 3.3V: %f V, %f A\r\n",
-        sample->peg_3_3v.voltage,
-        sample->peg_3_3v.current);
+    benchlab_char *sensors = (benchlab_char *) ctx;
+
+    for (size_t i = 0; i < BENCHLAB_VIN_SENSORS; ++i) {
+        printf("Input voltage #%zu: %f V\r\n", i, sample->input_voltage[i]);
+    }
+
+    printf("Supply voltage: %f V\r\n", sample->supply_voltage);
+    printf("Reference voltage: %f V\r\n", sample->reference_voltage);
+    printf("Chip temperature: %f °C\r\n", sample->chip_temperature);
+
+    for (size_t i = 0; i < BENCHLAB_TEMPERATURE_SENSORS; ++i) {
+        printf("Temperature #%zu: %f °C\r\n", i, sample->temperatures[i]);
+    }
+
+    printf("Ambient temperature: %f °C\r\n", sample->ambient_temperature);
+    printf("Humidity: %f %%\r\n", sample->humidity);
+    printf("External fan duty: %hhu\r\n", sample->external_fan_duty);
+
+    for (size_t i = 0; i < BENCHLAB_POWER_SENSORS; ++i) {
+        printf("Voltage #%zu: %f V\r\n", i, sample->voltages[i]);
+        printf("Current #%zu: %f A\r\n", i, sample->currents[i]);
+        printf("Power #%zu: %f W\r\n", i, sample->power[i]);
+    }
+
+    for (size_t i = 0; i < BENCHLAB_FANS; ++i) {
+        printf("Fan #%zu speed: %hu\r\n", i, sample->fan_speeds[i]);
+        printf("Fan #%zu duty: %hhu\r\n", i, sample->fan_duties[i]);
+    }
 }
-#endif
+
 
 /// <summary>
 /// The entry point of the test application for the C-style API.
@@ -88,6 +79,7 @@ void on_sample(_In_ powenetics_handle src,
 int _tmain(int argc, _TCHAR **argv) {
     benchlab_handle handle = NULL;
     HRESULT hr = S_OK;
+    benchlab_char *sensors = NULL;
 
     // Initialisation phase: either open the user-defined port or probe for one
     // Powenetics device attached to the machine.
@@ -135,54 +127,25 @@ int _tmain(int argc, _TCHAR **argv) {
         }
     }
 
-    if (SUCCEEDED(hr)) {
-        benchlab_sensor_readings readings;
-        hr = benchlab_read_sensors(&readings, handle);
-
-        benchlab_sample sample;
-        hr = benchlab_readings_to_sample(&sample, &readings, NULL);
-        
-        benchlab_rgb_config rgb_config;
-        hr = benchlab_read_rgb(&rgb_config, handle, 0);
-
-        int x = 5;
-
-        //rgb_config.red = 0x00;
-        //rgb_config.green = 0x00;
-        //rgb_config.blue = 0xff;
-        //rgb_config.mode = benchlab_rgb_mode_single_colour;
-        //rgb_config.speed = 128;
-        //rgb_config.direction = benchlab_rgb_direction_anti_clockwise;
-        //hr = benchlab_write_rgb(handle, &rgb_config);
-
-        //hr = benchlab_read_rgb(&rgb_config, handle);
-
-        //hr = benchlab_button_press(handle, benchlab_button_power, 200);
-    }
-
     {
-        size_t s = 0;
-        benchlab_get_power_sensors(NULL, &s);
-        benchlab_char *ss = malloc(s * sizeof(benchlab_char));
-        benchlab_get_power_sensors(ss, &s);
-        int x = 0;
-    }
-
-#if false
-    // Calibrate the device.
-    if (SUCCEEDED(hr)) {
-        //hr = powenetics_calibrate(handle);
+        size_t size = 0;
+        benchlab_get_power_sensors(NULL, &size);
+        if ((sensors = malloc(size * sizeof(benchlab_char))) == NULL) {
+            hr = E_OUTOFMEMORY;
+        } else {
+            benchlab_get_power_sensors(sensors, &size);
+        }
     }
 
     // Stream data to 'on_sample'.
     if (SUCCEEDED(hr)) {
-        hr = powenetics_start_streaming(handle, on_sample, NULL);
+        hr = benchlab_start_streaming(handle, 10, &on_sample, sensors);
     }
 
     if (SUCCEEDED(hr)) {
 #if defined(_WIN32)
         printf("Press any key to end measurement.\n");
-        getch();
+        _getch();
 #else /* defined(_WIN32) */
         sleep(10);
 #endif /* defined(_WIN32) */
@@ -190,9 +153,12 @@ int _tmain(int argc, _TCHAR **argv) {
 
     // Cleanup phase.
     if (handle != NULL) {
-        powenetics_close(handle);
+        benchlab_close(handle);
     }
-#endif
+
+    if (sensors != NULL) {
+        free(sensors);
+    }
 
     return 0;
 }

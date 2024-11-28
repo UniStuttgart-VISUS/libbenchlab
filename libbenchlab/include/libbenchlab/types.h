@@ -325,7 +325,7 @@ typedef struct LIBBENCHLAB_API benchlab_sample_t {
 /// <summary>
 /// The callback to be invoked when a new sample arrives.
 /// </summary>
-typedef void (*benchlab_data_callback)(
+typedef void (*benchlab_sample_callback)(
     _In_ benchlab_handle source,
     _In_ const benchlab_sample *sample,
     _In_opt_ void *context);

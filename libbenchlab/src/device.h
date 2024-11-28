@@ -5,6 +5,7 @@
 // <author>Christoph Müller</author>
 
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <cinttypes>
@@ -22,6 +23,8 @@
 
 #include "libbenchlab/serial.h"
 #include "libbenchlab/types.h"
+
+#include "stream_state.h"
 
 
 
@@ -86,6 +89,19 @@ public:
     HRESULT read(_Out_ benchlab_sensor_readings& readings) const noexcept;
 
     /// <summary>
+    /// Start streaming data from the device and deliver it to the given
+    /// <paramref name="callback" /> function.
+    /// </summary>
+    HRESULT start(_In_ const benchlab_sample_callback callback,
+        _In_opt_ void *context,
+        _In_ const std::chrono::milliseconds period) noexcept;
+
+    /// <summary>
+    /// Asks the streaming thread to stop and waits for it exit.
+    /// </summary>
+    HRESULT stop(void) noexcept;
+
+    /// <summary>
     /// Gets the unique ID of the device.
     /// </summary>
     HRESULT uid(_Out_ benchlab_device_uid_type& uid) const noexcept;
@@ -147,6 +163,16 @@ private:
     HRESULT check_handle(void) const noexcept;
 
     /// <summary>
+    /// Check whether the <see cref="_state" /> is still
+    /// <see cref="stream_state::running" />.
+    /// </summary>
+    /// <returns></returns>
+    inline bool check_running(void) noexcept {
+        auto state = this->_state.load(std::memory_order::memory_order_acquire);
+        return (state == stream_state::running);
+    }
+
+    /// <summary>
     /// Requests the vendor data that include the version of the hardware and
     /// checks whether the response is as expected.
     /// </summary>
@@ -154,6 +180,14 @@ private:
     /// was retrieved, but it was not the expected one, an error code if the
     /// underlying I/O operations failed.</returns>
     HRESULT check_vendor_data(void) noexcept;
+
+    /// <summary>
+    /// Checks whether the asynchronous streaming <see cref="_thread" /> is not
+    /// running.
+    /// </summary>
+    /// <returns><c>S_OK></c> if the thread is stopped, <c>E_NOT_VALID_STATE</c>
+    /// otherwise.</returns>
+    HRESULT check_stopped(void) const noexcept;
 
     /// <summary>
     /// Requests the welcome message from the device and checks that the response
@@ -254,6 +288,16 @@ private:
         return this->read(dst.data(), sizeof(TType) * dst.size(), timeout);
     }
 
+    void stream(_In_ const benchlab_sample_callback callback,
+        _In_opt_ void *context,
+        _In_ const std::chrono::milliseconds period);
+
+    /// <summary>
+    /// Obtains a single set of sensor readings from the device.
+    /// </summary>
+    HRESULT unchecked_read(
+        _Out_ benchlab_sensor_readings& readings) const noexcept;
+
     /// <summary>
     /// Synchronously write the given data to the serial port.
     /// </summary>
@@ -285,6 +329,8 @@ private:
 
     std::chrono::microseconds _command_sleep;
     handle_type _handle;
+    std::atomic<stream_state> _state;
+    std::thread _thread;
     std::chrono::milliseconds _timeout;
     std::uint8_t _version;
 };

@@ -378,6 +378,26 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
 
 
 /*
+ * benchlab_start_streaming
+ */
+HRESULT LIBBENCHLAB_API benchlab_start_streaming(_In_ const benchlab_handle handle,
+        _In_ const size_t period,
+        _In_ const benchlab_sample_callback callback,
+        _In_opt_ void *context) {
+    if (handle == nullptr) {
+        _benchlab_debug("The device handle is invalid.\r\n");
+        return E_HANDLE;
+    }
+    if (callback == nullptr) {
+        _benchlab_debug("The sample callback is an invalid pointer.\r\n");
+        return E_INVALIDARG;
+    }
+
+    return handle->start(callback, context, std::chrono::milliseconds(period));
+}
+
+
+/*
  * ::benchlab_write_rgb
  */
 HRESULT LIBBENCHLAB_API benchlab_write_rgb(
