@@ -44,6 +44,57 @@ if (handle != NULL) {
 }
 ```
 
+### Reading sensor data
+Sensor data can be obtained synchronously as follows:
+```c++
+benchlab_sensor_readings readings;
+
+{
+    auto hr = ::benchlab_read_sensors(&readings, handle);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+```
+
+Note that this will give you the raw data as returned by the device. If you want to have a more user-friendly version of the data using Volts, Amperes and Watts, you can convert the `benchlab_sensor_readings` to a `benchlab_sample_` like so:
+```c++
+benchlab_sensor_readings readings;
+benchlab_sample sample;
+
+{
+    auto hr = ::benchlab_readings_to_sample(&sample, &readings, nullptr);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+```
+
+### Streaming sensor data
+The API also allows for asynchronously streaming `benchlab_sample`s to a user-defined callback:
+```c++
+void on_sample(benchlab_handle src, const benchlab_sample *sample, void *ctx) {
+    // Do something with the sample.
+}
+
+{
+    // The second parameter specifies the period between two samples. If the
+    // period is smaller than it takes to obtain a sample, the API will stream
+    // as fast as possible.
+    // The fourth parameter is a user-defined context that will be passed to
+    // 'on_sample'.
+    auto hr = ::benchlab_start_streaming(handle, 10, &on_sample, nullptr);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+```
+
+Streaming is stopped by:
+```c++
+{
+    auto hr = benchlab_stop_streaming(handle);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+```
+
+> [!WARNING]
+> You cannot use any synchronous APIs accessing the hardware while the device is streaming.
+
 ## Demo programmes
 ### cclient
 This is the simplest possible demo for obtaining samples in C. The programme probes for a Benchlab device attached to the computer and dumps its data to the console if no command line argument was provided. The programme accepts one optional command line argument, which is the path of the COM port to open.
