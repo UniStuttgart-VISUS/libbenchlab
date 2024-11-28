@@ -208,16 +208,34 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
 /// Starts asynchronously streaming data from a Benchlab device to
 /// <paramref name="callback" /> every <paramref name="period" /> milliseconds.
 /// </summary>
-/// <param name="handle"></param>
-/// <param name="period"></param>
-/// <param name="callback"></param>
-/// <param name="context"></param>
-/// <returns></returns>
+/// <param name="handle">The handle of the device to stream from.</param>
+/// <param name="period">The period in milliseconds between two samples.</param>
+/// <param name="callback">The callback to receive the samples.</param>
+/// <param name="context">A user-defined pointer to be passed to the
+/// <paramref name="callback" />.</param>
+/// <returns><c>S_OK</c> in case of success, <c>E_HANDLE</c> if
+/// <paramref name="handle" /> is invalid, <c>E_POINTER</c> if the
+/// <paramref name="callback" /> is an invalid pointer, 
+/// <c>E_NOT_VALID_STATE</c> if the device was already streaming.</returns>
 HRESULT LIBBENCHLAB_API benchlab_start_streaming(
     _In_ const benchlab_handle handle,
     _In_ const size_t period,
     _In_ const benchlab_sample_callback callback,
     _In_opt_ void *context);
+
+/// <summary>
+/// Stops the asynchronous streaming from the given Benchlab device.
+/// </summary>
+/// <remarks>
+/// This method blocks until the thread delivering the samples actually stopped
+/// and it is safe to invalidate any previously installed callback.
+/// </remarks>
+/// <param name="handle">The handle of the device to stop streaming from.</param>
+/// <returns><c>S_OK</c> in case of success, <c>E_HANDLE</c> if
+/// <paramref name="handle" /> is invalid, <c>E_NOT_VALID_STATE</c> if the device
+/// was not streaming in the first place.</returns>
+HRESULT LIBBENCHLAB_API benchlab_stop_streaming(
+    _In_ const benchlab_handle handle);
 
 /// <summary>
 /// Updates the RGB configuration of the given Benchlab device.

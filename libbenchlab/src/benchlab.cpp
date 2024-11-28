@@ -398,6 +398,19 @@ HRESULT LIBBENCHLAB_API benchlab_start_streaming(_In_ const benchlab_handle hand
 
 
 /*
+ * benchlab_stop_streaming
+ */
+HRESULT LIBBENCHLAB_API benchlab_stop_streaming(_In_ const benchlab_handle handle) {
+    if (handle == nullptr) {
+        _benchlab_debug("The device handle is invalid.\r\n");
+        return E_HANDLE;
+    }
+
+    return handle->stop();
+}
+
+
+/*
  * ::benchlab_write_rgb
  */
 HRESULT LIBBENCHLAB_API benchlab_write_rgb(
