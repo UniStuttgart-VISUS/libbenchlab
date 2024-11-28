@@ -46,4 +46,4 @@ if (handle != NULL) {
 
 ## Demo programmes
 ### cclient
-This is the simplest possible demo for obtaining samples in C. The programme probes for a Benchlab device attached to the computer and dumps their data to the console if no command line argument was provided. The programme accepts one optional command line argument, which is the path of the COM port to open.
+This is the simplest possible demo for obtaining samples in C. The programme probes for a Benchlab device attached to the computer and dumps its data to the console if no command line argument was provided. The programme accepts one optional command line argument, which is the path of the COM port to open.
