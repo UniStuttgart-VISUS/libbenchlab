@@ -81,6 +81,12 @@ typedef struct LIBBENCHLAB_API benchlab_serial_configuration_t {
     uint32_t baud_rate;
 
     /// <summary>
+    /// The timeout between issuing a command and reading the response,
+    /// in microseconds.
+    /// </summary>
+    uint32_t command_sleep;
+
+    /// <summary>
     /// The number of data bits.
     /// </summary>
     uint8_t data_bits;

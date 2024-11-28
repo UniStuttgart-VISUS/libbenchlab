@@ -135,8 +135,8 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         return E_NOT_VALID_STATE;
     }
 
+    this->_command_sleep = std::chrono::microseconds(config->command_sleep);
     this->_timeout = std::chrono::milliseconds(config->read_timeout);
-
 
 #if defined(_WIN32)
     this->_handle = ::CreateFileW(com_port, GENERIC_READ | GENERIC_WRITE, 0,

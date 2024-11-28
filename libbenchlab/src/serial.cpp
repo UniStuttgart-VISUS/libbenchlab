@@ -19,6 +19,7 @@ HRESULT LIBBENCHLAB_API benchlab_initialise_serial_configuration(
     switch (config->version) {
         case 1:
             config->baud_rate = 115200;
+            config->command_sleep = 10;
             config->data_bits = 8;
             config->dtr_enable = true;
             config->handshake = benchlab_handshake::none;
