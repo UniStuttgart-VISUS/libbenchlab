@@ -48,20 +48,20 @@ HRESULT benchlab_device::ports(_In_ TIterator oit) {
     return S_OK;
 
 #else /* defined(_WIN32) */
-    string[] ttyList = Directory.GetDirectories("/sys/bus/usb-serial/devices/");
+    //string[] ttyList = Directory.GetDirectories("/sys/bus/usb-serial/devices/");
 
-    foreach(string portFile in ttyList) {
-        string realPortFile = Mono.Unix.UnixPath.GetRealPath(portFile);
-        string checkPath = Path.GetFullPath(Path.Combine(realPortFile, "../uevent"));
-        string[] lines = File.ReadAllLines(checkPath);
-        string productLine = lines.First(l = > l.StartsWith("PRODUCT="));
-        string[] productSplit = productLine.Remove(0, 8).Trim().Split('/');
+    //foreach(string portFile in ttyList) {
+    //    string realPortFile = Mono.Unix.UnixPath.GetRealPath(portFile);
+    //    string checkPath = Path.GetFullPath(Path.Combine(realPortFile, "../uevent"));
+    //    string[] lines = File.ReadAllLines(checkPath);
+    //    string productLine = lines.First(l = > l.StartsWith("PRODUCT="));
+    //    string[] productSplit = productLine.Remove(0, 8).Trim().Split('/');
 
-        if (productSplit[0] == "1a86" && productSplit[1] == "7523") {
-            string portDevPath = Path.Combine("/dev/", Path.GetFileName(portFile));
-            ports.Add(portDevPath);
-        }
-    }
+    //    if (productSplit[0] == "1a86" && productSplit[1] == "7523") {
+    //        string portDevPath = Path.Combine("/dev/", Path.GetFileName(portFile));
+    //        ports.Add(portDevPath);
+    //    }
+    //}
     return E_NOTIMPL;
 #endif /* defined(_WIN32) */
 }
