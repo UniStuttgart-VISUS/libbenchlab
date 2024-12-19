@@ -29,8 +29,9 @@
 /// </summary>
 /// <param name="path">The path of the directory to retrieve the files for.
 /// </param>
-/// <param name="is_recursive"></param>
+/// <param name="is_recursive">Instructs the function to recursively retrieve all
+/// files in <paramref name="path" /> instead of only the immediate children.</param>
 /// <returns></returns>
-std::vector<std::basic_string< benchlab_char>> get_files(
+std::vector<std::basic_string<benchlab_char>> get_files(
     _In_ const std::basic_string<benchlab_char>& path,
     _In_ const bool is_recursive);
