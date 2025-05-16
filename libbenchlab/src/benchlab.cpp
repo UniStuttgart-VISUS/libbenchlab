@@ -6,6 +6,8 @@
 
 #include "libbenchlab/benchlab.h"
 
+#include <iterator>
+
 #include "debug.h"
 #include "device.h"
 

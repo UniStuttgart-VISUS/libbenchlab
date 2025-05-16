@@ -12,6 +12,7 @@ include(FetchContent)
 # User-configurable options
 #option(BENCHLAB_BuildTests "Build the test driver" OFF)
 option(BENCHLAB_BuildCclient "Build the C-style test client" ON)
+option(BENCHLAB_BuildCppClient "Build the C++ test client" ON)
 #cmake_dependent_option(POWENETICS_BuildExcellentPowenetics "Build the excellent demo programme" ON WIN32 OFF)
 #cmake_dependent_option(POWENETICS_UseUdev "Use libudev to enumerate serial devices" OFF UNIX OFF)
 
@@ -66,6 +67,10 @@ endif ()
 # Build the test for the C API.
 if (BENCHLAB_BuildCclient)
     add_subdirectory(cclient)
+endif()
+
+if (BENCHLAB_BuildCppClient)
+    add_subdirectory(cppclient)
 endif()
 
 
