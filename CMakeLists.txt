@@ -19,7 +19,7 @@ option(BENCHLAB_BuildCppClient "Build the C++ test client" ON)
 
 # Windows Implementation Library
 FetchContent_Declare(wil
-    URL "https://codeload.github.com/microsoft/wil/zip/refs/tags/v1.0.240803.1"
+    URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.250325.1.zip"
 )
 option(FAST_BUILD "" OFF)
 option(WIL_BUILD_PACKAGING "" OFF)
