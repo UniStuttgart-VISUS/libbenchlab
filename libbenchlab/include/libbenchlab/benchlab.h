@@ -23,7 +23,7 @@ extern "C" {
 
 /// <summary>
 /// Press the specified <paramref name="button" /> for the given
-/// <pararmef name="duration" /> in milliseconds.
+/// <paramref name="duration" /> in milliseconds.
 /// </summary>
 /// <remarks>
 /// <para>This function cannot be called while the device is asynchronously
