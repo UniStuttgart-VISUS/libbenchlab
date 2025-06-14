@@ -58,12 +58,18 @@ HRESULT LIBBENCHLAB_API benchlab_close(_In_ const benchlab_handle handle);
 /// streaming measurement data.</para>
 /// </remarks>
 /// <param name="out_name">Receives the name of the device, which is
-/// ASCII-encoded.</param>
+/// ASCII-encoded. The string is guaranteed to be null-terminated if the
+/// function succeeded. Otherwise, the value will be invalid.</param>
 /// <param name="cnt">On entry, the number of characters that can be written
 /// to <paramref name="out_name" />. On exit, the required number of characters
 /// for the device name.</param>
 /// <param name="handle">The handle of the device to get the name of.</param>
-/// <returns></returns>
+/// <returns><c>S_OK</c> in case of success, <c>E_POINTER</c> if
+/// <paramref name="cnt" /> is an invalid pointer, or if <paramref name="cnt" />
+/// indicates a non-empty buffer, but <paramref name="out_name" /> is invalid;
+/// <c>E_HANDLE</c> if <paramref name="handle" /> is invalid;
+/// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if the provided buffer
+/// is too small; any other error code if the retrieval failed.</returns>
 HRESULT LIBBENCHLAB_API benchlab_get_device_name(
     _Out_writes_z_(*cnt) char *out_name,
     _Inout_ size_t *cnt,
@@ -100,9 +106,12 @@ HRESULT LIBBENCHLAB_API benchlab_get_firmware(
 /// </summary>
 /// <param name="out_sensors">A buffer to receive the multi-sz string of the
 /// sensor names. The buffer must be able to hold at least
-/// <paramref name="cnt" /> characters if not <c>nullptr</c>.</param>
+/// <paramref name="cnt" /> characters if not <c>nullptr</c>. The strings will
+/// only be valid if the function succeeded. In this case, it is guaranteed
+/// that every string is null-terminated and the whole array is terminated
+/// by another null character.</param>
 /// <param name="cnt">On entry, the number of characters in
-/// <parmaref name="out_sensors" />, on exit the number of characters of the
+/// <paramref name="out_sensors" />, on exit the number of characters of the
 /// actual names. If this parameter is non-zero on entry, a valid buffer must
 /// be provided for <paramref name="out_sensors" />.</param>
 /// <returns><c>S_OK</c> in case of success,
@@ -127,7 +136,7 @@ HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
 /// configuration by calling
 /// <see cref="benchlab_initialise_serial_configuration" />.</param>
 /// <returns><c>S_OK</c> in case of success,
-/// <c>E_POINTER</c> if <paramref name="out_handle "/> is <c>nullptr</c>,
+/// <c>E_POINTER</c> if <paramref name="out_handle"/> is <c>nullptr</c>,
 /// <c>E_INVALIDARG</c> if <paramref name="com_port" /> is <c>nullptr</c>,
 /// <c>E_NOT_VALID_STATE</c> if the device has already been opened
 /// before, a platform-specific error code if accessing the selected
@@ -157,14 +166,17 @@ HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
 /// to the local machine.
 /// </summary>
 /// <param name="out_handles">A buffer to receive at least
-/// <paramref name="cnt" /> handles to devices.</param>
+/// <paramref name="cnt" /> handles to devices. The caller is responsible to
+/// close all <paramref name="cnt" /> handles that have been returned. This
+/// is also the case if the buffer was too small, but non-empty.</param>
 /// <param name="cnt">On entry, the number of handles that can be saved to
 /// <paramref name="out_handles" />, on exit, the number of handles that have
 /// actually been saved.</param>
 /// <returns><c>S_OK</c> in case the operation succeeded,
 /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there were more
-/// devices than could be stored to <paramref name="out_handles" />,
-/// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
+/// devices than could be stored to <paramref name="out_handles" /> (all
+/// <paramref name="cnt" /> handles that have already been opened must be
+/// closed before trying again), <c>E_NOT_SET</c> if no device at all
 /// was found, another error code if establishing the connection to the
 /// device failed.</returns>
 HRESULT LIBBENCHLAB_API benchlab_probe(
@@ -358,20 +370,36 @@ namespace benchlab {
     /// Opens all Benchlab telemetry devices connected to the local machine.
     /// </summary>
     /// <param name="out_handles">A vector that receives the handles.</param>
-    /// <returns><c>S_OK</c> in case the operation succeeded,
-    /// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
-    /// was found, another error code if establishing the connection to the
-    /// device failed.</returns>
+    /// <returns><c>S_OK</c> in case the operation succeeded, <c>E_NOT_SET</c>
+    /// if no device at all was found, another error code if establishing the
+    /// connection to the device failed.</returns>
     inline HRESULT probe(_Inout_ std::vector<unique_handle>& out_handles) {
-        std::size_t cnt = 0;
-        std::vector<benchlab_handle> handles(::benchlab_probe(nullptr, &cnt));
-        auto hr = ::benchlab_probe(handles.data(), &cnt);
+        std::vector<benchlab_handle> handles(1);
+        std::size_t cnt = handles.size();
+        HRESULT hr;
 
-        out_handles.resize(cnt);
-        std::transform(handles.begin(),
-            handles.end(),
-            out_handles.begin(),
-            [](benchlab_handle handle) { return unique_handle(handle); });
+        while (true) {
+            hr = ::benchlab_probe(handles.data(), &cnt);
+            if ((hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))) {
+                break;
+            }
+
+            // We start with one device and increment by one if the buffer was
+            // too small. As we do not expect a lot of devices being attached,
+            // it does not make sense to grow the buffer faster than one at a
+            // time.
+            std::for_each(handles.begin(), handles.end(), ::benchlab_close);
+            handles.emplace_back();
+            cnt = handles.size();
+        }
+
+        if (SUCCEEDED(hr)) {
+            out_handles.resize(cnt);
+            std::transform(handles.begin(),
+                handles.end(),
+                out_handles.begin(),
+                [](benchlab_handle handle) { return unique_handle(handle); });
+        }
 
         return hr;
     }
