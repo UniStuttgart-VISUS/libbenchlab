@@ -100,7 +100,7 @@ Streaming is stopped by:
 This is the simplest possible demo for obtaining samples in C. The programme probes for a Benchlab device attached to the computer and dumps its data to the console if no command line argument was provided. The programme accepts one optional command line argument, which is the path of the COM port to open.
 
 ### cppclient
-This is the C++ equivalent of the cclient demo.
+This is the C++ equivalent of the cclient demo. It highlights the use of the `visus::benchlab::unique_handle` and the C++ convenience functions wrapping the C API.
 
 ## Acknowledgments
 This work was partially funded by Deutsche Forschungsgemeinschaft (DFG) as part of [SFB/Transregio 161](https://www.sfbtrr161.de) (project ID 251654672).
