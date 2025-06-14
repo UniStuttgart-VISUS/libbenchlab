@@ -44,6 +44,26 @@ if (handle != NULL) {
 }
 ```
 
+In C++, a RAII wrapper for device handles can be used like so:
+```c++
+#include <vector>
+#include <libbenchlab/benchlab.h>
+
+// Open all available devices.
+std::vector<visus::benchlab::unique_handle> handles;
+{
+    auto hr = visus::benchlab::probe(handles.data(), &cnt);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+
+// Open the first device we can find.
+visus::benchlab::unique_handle handle;
+{
+    auto hr = visus::benchlab::probe(handle);
+    if (FAILED(hr)) { /* Handle the error. */ }
+}
+```
+
 ### Reading sensor data
 Sensor data can be obtained synchronously as follows:
 ```c++
