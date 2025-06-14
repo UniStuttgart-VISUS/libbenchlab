@@ -98,10 +98,33 @@ int _tmain(int argc, _TCHAR **argv) {
             size_t cnt = 1;
             hr = benchlab_probe(&handle, &cnt);
 
-            // For the demo, we can live with having only one device, so if the
-            // error indicates that there would be more, we just ignore that.
+            // For the demo, we can live with having only one device, but we
+            // only get anything if we provide a sufficient buffer for *all* the
+            // devices. To do that, we need to allocate temporary memory and
+            // immediately close all handles but the first one.
             if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
-                hr = S_OK;
+                benchlab_handle *h = malloc(cnt * sizeof(benchlab_handle));
+                if (h != NULL) {
+                    hr = E_OUTOFMEMORY;
+                }
+
+                if (SUCCEEDED(hr)) {
+                    hr = benchlab_probe(h, &cnt);
+                }
+
+                if (SUCCEEDED(hr)) {
+                    assert(cnt > 0);
+                    handle = h[0];
+
+                    // Close the handles we do not need.
+                    for (size_t i = 1; i < cnt; ++i) {
+                    benchlab_close(h[i]);
+                    }
+                }
+
+                if (h != NULL) {
+                    free(h);
+                }
             }
 
         } else {

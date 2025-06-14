@@ -8,6 +8,7 @@
 
 #if defined(__cplusplus)
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <string>
 #include <vector>
@@ -167,11 +168,15 @@ HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
 /// </summary>
 /// <param name="out_handles">A buffer to receive at least
 /// <paramref name="cnt" /> handles to devices. The caller is responsible to
-/// close all <paramref name="cnt" /> handles that have been returned. This
-/// is also the case if the buffer was too small, but non-empty.</param>
+/// close all <paramref name="cnt" /> handles using
+/// <see cref="benchlab_close" /> unless the return value is
+/// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c>, in which case
+/// <paramref name="cnt" /> will report the required buffer size, but nothing
+/// will have been returned.</param>
 /// <param name="cnt">On entry, the number of handles that can be saved to
-/// <paramref name="out_handles" />, on exit, the number of handles that have
-/// actually been saved.</param>
+/// <paramref name="out_handles" />, on successful exit, the number of handles
+/// that have actually been saved. If the buffer was reported to be too small,
+/// the required size will be returned to this variable.</param>
 /// <returns><c>S_OK</c> in case the operation succeeded,
 /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there were more
 /// devices than could be stored to <paramref name="out_handles" /> (all
@@ -348,25 +353,6 @@ namespace benchlab {
     }
 
     /// <summary>
-    /// Opens any Benchlab telemetry device connected to the local machine.
-    /// </summary>
-    /// <param name="out_handle">Receives the handle for the power measurement
-    /// device in case of success.</param>
-    /// <returns><c>S_OK</c> in case the operation succeeded,
-    /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there is more
-    /// than one device connected to the machine,
-    /// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
-    /// was found, another error code if establishing the connection to the
-    /// device failed.</returns>
-    inline HRESULT probe(_Out_ unique_handle& out_handle) {
-        benchlab_handle handle = nullptr;
-        std::size_t cnt = 1;
-        auto hr = ::benchlab_probe(&handle, &cnt);
-        out_handle.reset(handle);
-        return hr;
-    }
-
-    /// <summary>
     /// Opens all Benchlab telemetry devices connected to the local machine.
     /// </summary>
     /// <param name="out_handles">A vector that receives the handles.</param>
@@ -376,29 +362,37 @@ namespace benchlab {
     inline HRESULT probe(_Inout_ std::vector<unique_handle>& out_handles) {
         std::vector<benchlab_handle> handles(1);
         std::size_t cnt = handles.size();
-        HRESULT hr;
-
-        while (true) {
+        
+        auto hr = ::benchlab_probe(handles.data(), &cnt);
+        if ((hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))) {
+            handles.resize(cnt);
             hr = ::benchlab_probe(handles.data(), &cnt);
-            if ((hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))) {
-                break;
-            }
-
-            // We start with one device and increment by one if the buffer was
-            // too small. As we do not expect a lot of devices being attached,
-            // it does not make sense to grow the buffer faster than one at a
-            // time.
-            std::for_each(handles.begin(), handles.end(), ::benchlab_close);
-            handles.emplace_back();
-            cnt = handles.size();
         }
 
+        out_handles.resize(cnt);
+        std::transform(handles.begin(),
+            handles.end(),
+            out_handles.begin(),
+            [](benchlab_handle handle) { return unique_handle(handle); });
+
+        return hr;
+    }
+
+    /// <summary>
+    /// Opens any Benchlab telemetry device connected to the local machine.
+    /// </summary>
+    /// <param name="out_handle">Receives the handle for the power measurement
+    /// device in case of success.</param>
+    /// <returns><c>S_OK</c> in case the operation succeeded, <c>E_NOT_SET</c>
+    /// if no device at all was found, another error code if establishing the
+    /// connection to the device failed.</returns>
+    inline HRESULT probe(_Out_ unique_handle& out_handle) {
+        std::vector<unique_handle> handles;
+        auto hr = probe(handles);
+
         if (SUCCEEDED(hr)) {
-            out_handles.resize(cnt);
-            std::transform(handles.begin(),
-                handles.end(),
-                out_handles.begin(),
-                [](benchlab_handle handle) { return unique_handle(handle); });
+            assert(!handles.empty());
+            out_handle = std::move(handles.front());
         }
 
         return hr;

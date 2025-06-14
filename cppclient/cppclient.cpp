@@ -106,13 +106,6 @@ int _tmain(int argc, _TCHAR **argv) {
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
             hr = visus::benchlab::probe(handle);
-
-            // For the demo, we can live with having only one device, so if the
-            // error indicates that there would be more, we just ignore that.
-            if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
-                hr = S_OK;
-            }
-
         } else {
             hr = visus::benchlab::open(handle, argv[1], nullptr);
         }
