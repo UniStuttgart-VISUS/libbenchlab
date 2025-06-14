@@ -30,5 +30,5 @@
 
 
 #if !defined(_WIN32)
-#include "libbenchlab/linuxsal.h"
+#include "libbenchlab/nosal.h"
 #endif /* !defined(_WIN32) */

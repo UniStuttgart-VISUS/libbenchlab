@@ -38,10 +38,11 @@
 void on_sample(_In_ benchlab_handle src,
         _In_ const benchlab_sample *sample,
         _In_opt_ void *ctx) {
-    benchlab_char *sensors = (benchlab_char *) ctx;
-    _Analysis_assume_(sensors != NULL);
+    typedef std::vector<std::basic_string<benchlab_char>> sensor_list;
+    auto& sensors = *static_cast<sensor_list *>(ctx);
+    _Analysis_assume_(sensors != nullptr);
 
-    for (size_t i = 0; i < BENCHLAB_VIN_SENSORS; ++i) {
+    for (std::size_t i = 0; i < BENCHLAB_VIN_SENSORS; ++i) {
         std::_tcout << _T("Input voltage #") << i << _T(": ")
             << sample->input_voltage[i] << _T(" V") << std::endl;
     }
@@ -53,7 +54,7 @@ void on_sample(_In_ benchlab_handle src,
     std::_tcout << _T("Chip temperature: ")
         << sample->chip_temperature << _T("°C") << std::endl;
 
-    for (size_t i = 0; i < BENCHLAB_TEMPERATURE_SENSORS; ++i) {
+    for (std::size_t i = 0; i < BENCHLAB_TEMPERATURE_SENSORS; ++i) {
         std::_tcout << _T("Temperature #") << i << _T(": ")
             << sample->temperatures[i] << _T(" °C") << std::endl;
     }
@@ -65,18 +66,16 @@ void on_sample(_In_ benchlab_handle src,
     std::_tcout << _T("External fan duty: ")
         << sample->external_fan_duty << std::endl;
 
-    benchlab_char *sensor = sensors;
-    for (size_t i = 0; i < BENCHLAB_POWER_SENSORS; ++i) {
-        std::_tcout << _T("Voltage #") << i << _T(" (") << sensor << _T("): ")
-            << sample->voltages[i] << _T(" V") << std::endl;
-        std::_tcout << _T("Current #") << i << _T(" (") << sensor << _T("): ")
-            << sample->currents[i] << _T(" A") << std::endl;
-        std::_tcout << _T("Power #") << i << _T(" (") << sensor << _T("): ")
-            << sample->power[i] << _T(" W") << std::endl;
-        while (*sensor++ != 0);
+    for (std::size_t i = 0; i < BENCHLAB_POWER_SENSORS; ++i) {
+        std::_tcout << _T("Voltage #") << i << _T(" (") << sensors[i]
+            << _T("): ") << sample->voltages[i] << _T(" V") << std::endl;
+        std::_tcout << _T("Current #") << i << _T(" (") << sensors[i]
+            << _T("): ") << sample->currents[i] << _T(" A") << std::endl;
+        std::_tcout << _T("Power #") << i << _T(" (") << sensors[i]
+            << _T("): ") << sample->power[i] << _T(" W") << std::endl;
     }
 
-    for (size_t i = 0; i < BENCHLAB_FANS; ++i) {
+    for (std::size_t i = 0; i < BENCHLAB_FANS; ++i) {
         std::_tcout << _T("Fan #") << i << _T(" speed:")
             << sample->fan_speeds[i] << std::endl;
         std::_tcout << _T("Fan #") << _T(" duty:")
@@ -98,16 +97,15 @@ void on_sample(_In_ benchlab_handle src,
 /// <param name="argv">The list of command line arguments.</param>
 /// <returns>Zero, unconditionally.</returns>
 int _tmain(int argc, _TCHAR **argv) {
-    benchlab_handle handle = NULL;
+    visus::benchlab::unique_handle handle;
     HRESULT hr = S_OK;
-    std::vector<benchlab_char> sensors;
+    auto sensors = visus::benchlab::get_power_sensors();
 
     // Initialisation phase: either open the user-defined port or probe for one
     // Powenetics device attached to the machine.
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
-            size_t cnt = 1;
-            hr = ::benchlab_probe(&handle, &cnt);
+            hr = visus::benchlab::probe(handle);
 
             // For the demo, we can live with having only one device, so if the
             // error indicates that there would be more, we just ignore that.
@@ -116,14 +114,14 @@ int _tmain(int argc, _TCHAR **argv) {
             }
 
         } else {
-            hr = ::benchlab_open(&handle, argv[1], NULL);
+            hr = visus::benchlab::open(handle, argv[1], nullptr);
         }
     }
-    assert((handle != NULL) || FAILED(hr));
+    assert(handle || FAILED(hr));
 
     if (SUCCEEDED(hr)) {
         benchlab_device_uid_type uid;
-        if (SUCCEEDED(hr = ::benchlab_get_device_uid(&uid, handle))) {
+        if (SUCCEEDED(hr = ::benchlab_get_device_uid(&uid, handle.get()))) {
 #if defined(_WIN32)
             wchar_t str[128];
             if (::StringFromGUID2(uid, str, sizeof(str) / sizeof(wchar_t))) {
@@ -135,29 +133,23 @@ int _tmain(int argc, _TCHAR **argv) {
 
     if (SUCCEEDED(hr)) {
         char name[64];
-        size_t cnt = sizeof(name);
-        if (SUCCEEDED(hr = ::benchlab_get_device_name(name, &cnt, handle))) {
+        std::size_t cnt = sizeof(name);
+        if (SUCCEEDED(hr = ::benchlab_get_device_name(name, &cnt,
+                handle.get()))) {
             std::cout << "Device name: " << name << std::endl;;
         }
     }
 
     if (SUCCEEDED(hr)) {
         uint8_t version = 0;
-        if (SUCCEEDED(hr = ::benchlab_get_firmware(&version, handle))) {
+        if (SUCCEEDED(hr = ::benchlab_get_firmware(&version, handle.get()))) {
             std::_tcout << _T("Firmware version: ") << version << std::endl;
         }
     }
 
-    {
-        size_t size = 0;
-        ::benchlab_get_power_sensors(NULL, &size);
-        sensors.resize(size);
-        ::benchlab_get_power_sensors(sensors.data(), &size);
-    }
-
     // Stream data to 'on_sample'.
     if (SUCCEEDED(hr)) {
-        hr = benchlab_start_streaming(handle, 10, &on_sample, sensors.data());
+        hr = benchlab_start_streaming(handle.get(), 10, &on_sample, &sensors);
     }
 
     if (SUCCEEDED(hr)) {
@@ -167,11 +159,6 @@ int _tmain(int argc, _TCHAR **argv) {
 #else /* defined(_WIN32) */
         ::sleep(10);
 #endif /* defined(_WIN32) */
-    }
-
-    // Cleanup phase.
-    if (handle != NULL) {
-        ::benchlab_close(handle);
     }
 
     return 0;

@@ -1,10 +1,17 @@
 ﻿// <copyright file="benchlab.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #pragma once
+
+#if defined(__cplusplus)
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+#endif /* defined(__cplusplus) */
 
 #include "libbenchlab/api.h"
 #include "libbenchlab/serial.h"
@@ -106,11 +113,11 @@ HRESULT LIBBENCHLAB_API benchlab_get_power_sensors(
     _Inout_ size_t *cnt);
 
 /// <summary>
-/// Opens a handle to the Benchöab telemetry system connected to the specified
+/// Opens a handle to the Benchlab telemetry system connected to the specified
 /// serial port.
 /// </summary>
 /// <param name="out_handle">Receives the handle for the power measurement
-/// device in case of success,</param>
+/// device in case of success.</param>
 /// <param name="com_port">The path to the COM port. The format of this path
 /// is platform-specific. For instance, on Windows, this would be something
 /// like &quot;\\.\COM3&quot;, whereas on Linux, you would use something
@@ -255,4 +262,121 @@ HRESULT LIBBENCHLAB_API benchlab_write_rgb(
 
 #if defined(__cplusplus)
 } /* extern "C" */
+#endif /* defined(__cplusplus) */
+
+
+#if defined(__cplusplus)
+namespace visus {
+namespace benchlab {
+
+    /// <summary>
+    /// A deleter functor for <see cref="benchlab_handle" />, which can be
+    /// used for <see cref="std::unique_ptr" />.
+    /// </summary>
+    struct handle_deleter final {
+        inline void operator ()(benchlab_handle device) const {
+            ::benchlab_close(device);
+        }
+    };
+
+    /// <summary>
+    /// A unique pointer to replace <see cref="benchlab_handle" />.
+    /// </summary>
+    typedef std::unique_ptr<benchlab_device, handle_deleter> unique_handle;
+
+    /// <summary>
+    /// Gets the names of the power sensors available.
+    /// </summary>
+    /// <returns>The names of all power sensors.</returns>
+    inline std::vector<std::basic_string<benchlab_char>> get_power_sensors(
+            void) {
+        std::vector<std::basic_string<benchlab_char>> retval;
+
+        std::size_t cnt = 0;
+        ::benchlab_get_power_sensors(nullptr, &cnt);
+
+        std::vector<benchlab_char> buffer(cnt);
+        ::benchlab_get_power_sensors(buffer.data(), &cnt);
+
+        for (auto it = buffer.begin(); *it != static_cast<benchlab_char>(0);) {
+            retval.emplace_back(it.operator ->());
+            while (*it++ != static_cast<benchlab_char>(0));
+        }
+
+        return retval;
+    }
+
+    /// <summary>
+    /// Opens a handle to the Benchlab telemetry system connected to the specified
+    /// serial port.
+    /// </summary>
+    /// <param name="out_handle">Receives the handle for the power measurement
+    /// device in case of success.</param>
+    /// <param name="com_port">The path to the COM port. The format of this path
+    /// is platform-specific. For instance, on Windows, this would be something
+    /// like &quot;\\.\COM3&quot;, whereas on Linux, you would use something
+    /// like &quot;/dev/ttyACM0&quot;.</param>
+    /// <param name="config">The configuration used for the serial port. It is safe
+    /// to pass <c>nullptr</c>, in which case the function will obtain the default
+    /// configuration by calling
+    /// <see cref="benchlab_initialise_serial_configuration" />.</param>
+    /// <returns><c>S_OK</c> in case of success,
+    /// <c>E_POINTER</c> if <paramref name="out_handle "/> is <c>nullptr</c>,
+    /// <c>E_INVALIDARG</c> if <paramref name="com_port" /> is <c>nullptr</c>,
+    /// <c>E_NOT_VALID_STATE</c> if the device has already been opened
+    /// before, a platform-specific error code if accessing the selected
+    /// serial port failed.</returns>
+    inline HRESULT open(_Out_ unique_handle& out_handle,
+            _In_z_ const benchlab_char *com_port,
+            _In_opt_ const benchlab_serial_configuration *config) {
+        benchlab_handle handle = nullptr;
+        auto hr = ::benchlab_open(&handle, com_port, config);
+        out_handle.reset(handle);
+        return hr;
+    }
+
+    /// <summary>
+    /// Opens any Benchlab telemetry device connected to the local machine.
+    /// </summary>
+    /// <param name="out_handle">Receives the handle for the power measurement
+    /// device in case of success.</param>
+    /// <returns><c>S_OK</c> in case the operation succeeded,
+    /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there is more
+    /// than one device connected to the machine,
+    /// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
+    /// was found, another error code if establishing the connection to the
+    /// device failed.</returns>
+    inline HRESULT probe(_Out_ unique_handle& out_handle) {
+        benchlab_handle handle = nullptr;
+        std::size_t cnt = 1;
+        auto hr = ::benchlab_probe(&handle, &cnt);
+        out_handle.reset(handle);
+        return hr;
+    }
+
+    /// <summary>
+    /// Opens all Benchlab telemetry devices connected to the local machine.
+    /// </summary>
+    /// <param name="out_handles">A vector that receives the handles.</param>
+    /// <returns><c>S_OK</c> in case the operation succeeded,
+    /// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
+    /// was found, another error code if establishing the connection to the
+    /// device failed.</returns>
+    inline HRESULT probe(_Inout_ std::vector<unique_handle>& out_handles) {
+        std::size_t cnt = 0;
+        std::vector<benchlab_handle> handles(::benchlab_probe(nullptr, &cnt));
+        auto hr = ::benchlab_probe(handles.data(), &cnt);
+
+        out_handles.resize(cnt);
+        std::transform(handles.begin(),
+            handles.end(),
+            out_handles.begin(),
+            [](benchlab_handle handle) { return unique_handle(handle); });
+
+        return hr;
+    }
+
+} /* namespace benchlab */
+} /* namespace visus */
+
 #endif /* defined(__cplusplus) */
