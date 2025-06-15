@@ -1,6 +1,8 @@
 # libbenchlab
 A native C/C++ library for the [ElmorLabs BENCHLAB](https://benchlab.io/) telemetry system. The implementation of this library is directly derived from the [C# implementation](https://github.com/BenchLab-io/BENCHLAB.BENCHLAB_Core) used by the official tool.
 
+This library was designed for the [Power Overwhelming project](https://github.com/UniStuttgart-VISUS/power-overwhelming).
+
 ## Building the library
 The library is self-contained and can be built using CMake on Windows. Support for Linux is under development.
 
