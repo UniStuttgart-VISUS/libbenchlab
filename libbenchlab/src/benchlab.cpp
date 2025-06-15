@@ -1,11 +1,12 @@
 ﻿// <copyright file="benchlab.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #include "libbenchlab/benchlab.h"
 
+#include <cstring>
 #include <iterator>
 
 #include "debug.h"
@@ -243,7 +244,7 @@ HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
         return E_POINTER;
     }
     if (readings == nullptr) {
-        _benchlab_debug("The inpur data are an invalid pointer.\r\n");
+        _benchlab_debug("The input data are an invalid pointer.\r\n");
         return E_POINTER;
     }
 
@@ -383,7 +384,7 @@ HRESULT LIBBENCHLAB_API benchlab_read_sensors(
  * benchlab_start_streaming
  */
 HRESULT LIBBENCHLAB_API benchlab_start_streaming(_In_ const benchlab_handle handle,
-        _In_ const size_t period,
+        _In_ const std::size_t period,
         _In_ const benchlab_sample_callback callback,
         _In_opt_ void *context) {
     if (handle == nullptr) {
@@ -402,7 +403,8 @@ HRESULT LIBBENCHLAB_API benchlab_start_streaming(_In_ const benchlab_handle hand
 /*
  * benchlab_stop_streaming
  */
-HRESULT LIBBENCHLAB_API benchlab_stop_streaming(_In_ const benchlab_handle handle) {
+HRESULT LIBBENCHLAB_API benchlab_stop_streaming(
+        _In_ const benchlab_handle handle) {
     if (handle == nullptr) {
         _benchlab_debug("The device handle is invalid.\r\n");
         return E_HANDLE;

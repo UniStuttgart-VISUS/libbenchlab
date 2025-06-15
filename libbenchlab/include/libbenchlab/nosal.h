@@ -1,11 +1,11 @@
-﻿﻿// <copyright file="nosal.h" company="Visualisierungsinstitut der Universität Stuttgart">
+﻿// <copyright file="nosal.h" company="Visualisierungsinstitut der Universität Stuttgart">
 // Copyright © 2021 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
-#if !defined(_PWROWG_NOSAL_H)
-#define _PWROWG_NOSAL_H
+#if !defined(_BENCHLAB_NOSAL_H)
+#define _BENCHLAB_NOSAL_H
 #pragma once
 
 #if defined(_WIN32)
@@ -57,6 +57,10 @@
 #define _In_reads_bytes_(cnt)
 #endif /* !defined(_In_reads_bytes_) */
 
+#if !defined(_In_reads_bytes_opt_)
+#define _In_reads_bytes_opt_(cnt)
+#endif /* !defined(_In_reads_bytes_opt_) */
+
 #if !defined(_In_reads_or_z_)
 #define _In_reads_or_z_(cnt)
 #endif /* !defined(_In_reads_or_z_) */
@@ -80,6 +84,10 @@
 #if !defined(_Out_writes_)
 #define _Out_writes_(cnt)
 #endif /* !defined(_Out_writes_) */
+
+#if !defined(_Out_writes_z_)
+#define _Out_writes_z_(cnt)
+#endif /* !defined(_Out_writes_z_) */
 
 #if !defined(_Out_writes_bytes_)
 #define _Out_writes_bytes_(cnt)
@@ -121,4 +129,4 @@
 #define _When_(expr, annotes)
 #endif /* !defined(_When_) */
 
-#endif /* !defined(_PWROWG_NOSAL_H) */
+#endif /* !defined(_BENCHLAB_NOSAL_H) */

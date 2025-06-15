@@ -1,8 +1,12 @@
 ﻿// <copyright file="device.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
+
+#if !defined(_BENCHLAB_DEVICE_H)
+#define _BENCHLAB_DEVICE_H
+#pragma once
 
 #include <array>
 #include <atomic>
@@ -336,3 +340,5 @@ private:
 };
 
 #include "device.inl"
+
+#endif /* !defined(_BENCHLAB_DEVICE_H) */

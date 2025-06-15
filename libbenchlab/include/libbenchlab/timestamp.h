@@ -1,9 +1,11 @@
 ﻿// <copyright file="timestamp.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_TIMESTAMP_H)
+#define _BENCHLAB_TIMESTAMP_H
 #pragma once
 
 #include "stdint.h"
@@ -44,3 +46,5 @@ extern "C" {
 #if defined(__cplusplus)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#endif /* !defined(_BENCHLAB_TIMESTAMP_H) */

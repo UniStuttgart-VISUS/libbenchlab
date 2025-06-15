@@ -1,9 +1,11 @@
 ﻿// <copyright file="api.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_API_H)
+#define _BENCHLAB_API_H
 #pragma once
 
 
@@ -30,5 +32,8 @@
 
 
 #if !defined(_WIN32)
+#include "libbenchlab/nocom.h"
 #include "libbenchlab/nosal.h"
 #endif /* !defined(_WIN32) */
+
+#endif /* !defined(_BENCHLAB_API_H) */

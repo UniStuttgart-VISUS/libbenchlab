@@ -4,6 +4,8 @@
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_BENCHLAB_H)
+#define _BENCHLAB_BENCHLAB_H
 #pragma once
 
 #if defined(__cplusplus)
@@ -402,3 +404,5 @@ namespace benchlab {
 } /* namespace visus */
 
 #endif /* defined(__cplusplus) */
+
+#endif /* !defined(_BENCHLAB_BENCHLAB_H) */

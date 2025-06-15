@@ -18,23 +18,26 @@ option(BENCHLAB_BuildCppClient "Build the C++ test client" ON)
 
 
 # Windows Implementation Library
-FetchContent_Declare(wil
-    URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.250325.1.zip"
-)
-option(FAST_BUILD "" OFF)
-option(WIL_BUILD_PACKAGING "" OFF)
-option(WIL_BUILD_TESTS "" OFF)
-FetchContent_GetProperties(wil)
-if (NOT wil_POPULATED)
-    FetchContent_Populate(wil)
-    add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
+if (WIN32)
+    FetchContent_Declare(wil
+        URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.250325.1.zip"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    option(FAST_BUILD "" OFF)
+    option(WIL_BUILD_PACKAGING "" OFF)
+    option(WIL_BUILD_TESTS "" OFF)
+    FetchContent_GetProperties(wil)
+    if (NOT wil_POPULATED)
+        FetchContent_Populate(wil)
+        add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+    mark_as_advanced(FORCE
+        FETCHCONTENT_SOURCE_DIR_WIL
+        FETCHCONTENT_UPDATES_DISCONNECTED_WIL
+        FAST_BUILD
+        WIL_BUILD_PACKAGING
+        WIL_BUILD_TESTS)
 endif ()
-mark_as_advanced(FORCE
-    FETCHCONTENT_SOURCE_DIR_WIL
-    FETCHCONTENT_UPDATES_DISCONNECTED_WIL
-    FAST_BUILD
-    WIL_BUILD_PACKAGING
-    WIL_BUILD_TESTS)
 
 
 #  Global compiler options, which are derived from the settings above.
@@ -69,6 +72,7 @@ if (BENCHLAB_BuildCclient)
     add_subdirectory(cclient)
 endif()
 
+# Build the test for the C++ API.
 if (BENCHLAB_BuildCppClient)
     add_subdirectory(cppclient)
 endif()

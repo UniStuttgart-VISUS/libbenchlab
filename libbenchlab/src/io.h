@@ -1,9 +1,11 @@
 ﻿// <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_IO_H)
+#define _BENCHLAB_IO_H
 #pragma once
 
 #include <cerrno>
@@ -35,3 +37,5 @@
 std::vector<std::basic_string<benchlab_char>> get_files(
     _In_ const std::basic_string<benchlab_char>& path,
     _In_ const bool is_recursive);
+
+#endif /* !defined(_BENCHLAB_IO_H) */

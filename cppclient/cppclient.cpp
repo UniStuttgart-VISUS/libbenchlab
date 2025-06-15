@@ -20,10 +20,11 @@
 #else /* defined(_WIN32) */
 #include <unistd.h>
 
+#define _T(str) (str)
 #define _tmain main
 #define _TCHAR char
 
-#define tcout cout
+#define _tcout cout
 #endif /* defined(_WIN32) */
 
 #include "libbenchlab/benchlab.h"
@@ -102,7 +103,7 @@ int _tmain(int argc, _TCHAR **argv) {
     auto sensors = visus::benchlab::get_power_sensors();
 
     // Initialisation phase: either open the user-defined port or probe for one
-    // Powenetics device attached to the machine.
+    // Benchlab device attached to the machine.
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
             hr = visus::benchlab::probe(handle);

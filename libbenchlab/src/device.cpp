@@ -11,6 +11,10 @@
 #include <cstring>
 #include <limits>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif /* defined(_WIN32) */
+
 #include "libbenchlab/benchlab.h"
 
 #include "debug.h"
@@ -222,7 +226,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         }
     }
 #else /* defined(_WIN32) */
-    throw "TODO";
+#error "TODO";
 #endif /* defined(_WIN32) */
 
     {
@@ -639,7 +643,7 @@ HRESULT benchlab_device::read(_Out_writes_bytes_(cnt) void *dst,
 #if defined(_WIN32)
             return HRESULT_FROM_WIN32(ERROR_TIMEOUT);
 #else /* defined(_WIN32) */
-            return (-ETIMEDOUT);
+            return static_cast<HRESULT>(-ETIMEDOUT);
 #endif /* defined(_WIN32) */
         }
 

@@ -1,5 +1,5 @@
 ﻿// <copyright file="cclient.c" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -8,6 +8,8 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #include <conio.h>
@@ -92,7 +94,7 @@ int _tmain(int argc, _TCHAR **argv) {
     benchlab_char *sensors = NULL;
 
     // Initialisation phase: either open the user-defined port or probe for one
-    // Powenetics device attached to the machine.
+    // Benchlab device attached to the machine.
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
             size_t cnt = 1;

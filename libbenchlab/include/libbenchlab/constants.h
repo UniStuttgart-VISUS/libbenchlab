@@ -1,11 +1,12 @@
 ﻿// <copyright file="constants.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_CONSTANTS_H)
+#define _BENCHLAB_CONSTANTS_H
 #pragma once
-
 
 #if defined(__cplusplus)
 #include <cinttypes>
@@ -76,3 +77,5 @@ constexpr std::size_t BENCHLAB_RGB_PROFILES = 2;
 //public const int CAL_NUM = 2;
 //public const int CAL_FACTORY = 0;
 //public const int CAL_USER = 1;
+
+#endif /*! defined(_BENCHLAB_CONSTANTS_H) */

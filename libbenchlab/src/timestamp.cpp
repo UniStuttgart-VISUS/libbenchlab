@@ -1,5 +1,5 @@
 ﻿// <copyright file="timestamp.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -27,7 +27,7 @@ typedef std::chrono::duration<benchlab_timestamp, filetime_period>
 
 
 /*
- * ::_powenetics_make_timestamp
+ * ::_benchlab_make_timestamp
  */
 benchlab_timestamp LIBBENCHLAB_TEST_API _benchlab_make_timestamp(void) {
     using namespace std::chrono;
@@ -52,7 +52,7 @@ benchlab_timestamp LIBBENCHLAB_TEST_API _benchlab_make_timestamp(void) {
 
 
 /*
- * ::powenetics_make_timestamp
+ * ::benchlab_make_timestamp
  */
 benchlab_timestamp LIBBENCHLAB_API benchlab_make_timestamp(void) {
 #if defined(_WIN32)
@@ -65,6 +65,6 @@ benchlab_timestamp LIBBENCHLAB_API benchlab_make_timestamp(void) {
 
     return retval.QuadPart;
 #else /* defined(_WIN32) */
-    return ::_powenetics_make_timestamp();
+    return ::_benchlab_make_timestamp();
 #endif /* defined(_WIN32) */
 }

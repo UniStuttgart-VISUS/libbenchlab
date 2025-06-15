@@ -1,9 +1,11 @@
 ﻿// <copyright file="serial.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if !defined(_BENCHLAB_SERIAL_H)
+#define _BENCHLAB_SERIAL_H
 #pragma once
 
 #include "libbenchlab/api.h"
@@ -149,3 +151,5 @@ HRESULT LIBBENCHLAB_API benchlab_initialise_serial_configuration(
 #if defined(__cplusplus)
 }
 #endif /* defined(__cplusplus) */
+
+#endif /* !defined(_BENCHLAB_SERIAL_H) */

@@ -24,7 +24,8 @@
 #include "libbenchlab/timestamp.h"
 
 #if !defined(_WIN32)
-#include "libbenchlab/linuxhresult.h"
+#include "libbenchlab/nocom.h"
+#include "libbenchlab/nosal.h"
 #endif /* !defined(_WIN32) */
 
 
@@ -40,14 +41,20 @@ typedef char benchlab_char;
 #endif /* defined(_WIN32) */
 
 
-// Enables us to treat our enumerations as enum classes in C++ and as "normal"
-// enums in C.
+// LIBBENCHLAB_ENUM enables us to treat our enumerations as enum classes in C++
+// and as "normal" enums in C. LIBBENCHLAB_ENUM_BEGIN enables us to define
+// enumerations that have a specific underlying type that is required by the
+// hardware.
 #if defined(__cplusplus)
 #define LIBBENCHLAB_ENUM class
 #define LIBBENCHLAB_ENUM_SCOPE(scope, field) field
+#define LIBBENCHLAB_ENUM_BEGIN(name, type) enum class name : std::type {
+#define LIBBENCHLAB_ENUM_END() };
 #else /* defined(__cplusplus) */
 #define LIBBENCHLAB_ENUM
 #define LIBBENCHLAB_ENUM_SCOPE(scope, field) scope##_##field
+#define LIBBENCHLAB_ENUM_BEGIN(name, type) typedef type name;
+#define LIBBENCHLAB_ENUM_END()
 #endif /* defined(__cplusplus) */
 
 
@@ -77,90 +84,110 @@ typedef struct benchlab_device *benchlab_handle;
 #if defined(_WIN32)
 typedef GUID benchlab_device_uid_type;
 #else /* defined(_WIN32) */
-#error "TODO"
+typedef struct benchlab_device_uid_type_t {
+    uint32_t data1;
+    uint16_t data2;
+    uint16_t data3;
+    uint8_t data4[8];
+} benchlab_device_uid_type;
 #endif /* defined(_WIN32) */
 
-
+/// <summary>
+/// Defines the buttons that can be pressed via software.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_button, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_button : std::uint8_t {
     power = 0,
-    reset,
-    other
-};
+    reset = 1,
+    other = 2
 #else /* defined(__cplusplus) */
-#define benchlab_button uint8_t
 #define benchlab_button_power ((benchlab_button) 0)
 #define benchlab_button_reset ((benchlab_button) 1)
 #define benchlab_button_other ((benchlab_button) 2)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines possible fan control modes.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_fan_mode, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_fan_mode : std::uint8_t {
     temperature_control = 0,
-    fixed,
-    extended,
-};
+    fixed = 1,
+    extended = 2,
 #else /* defined(__cplusplus) */
-#define benchlab_fan_mode uint8_t
 #define benchlab_fan_mode_temperature_control ((benchlab_fan_mode) 0)
 #define benchlab_fan_mode_fixed ((benchlab_fan_mode) 1)
 #define benchlab_fan_mode_extended ((benchlab_fan_mode) 2)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines possible fan states.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_fan_stop, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_fan_stop : std::uint8_t {
     off = 0,
     on
-};
 #else /* defined(__cplusplus) */
-#define benchlab_fan_stop uint8_t
 #define benchlab_fan_stop_off ((benchlab_fan_stop) 0)
 #define benchlab_fan_stop_on ((benchlab_fan_stop) 1)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// What is this?
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_fan_switch_status, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_fan_switch_status : std::uint8_t {
     automatic = 0,
     half,
     full,
-};
 #else /* defined(__cplusplus) */
 #define benchlab_fan_switch_status uint8_t
 #define benchlab_fan_switch_status_automatic ((benchlab_fan_switch_status) 0)
 #define benchlab_fan_switch_status_half ((benchlab_fan_switch_status) 1)
 #define benchlab_fan_switch_status_full ((benchlab_fan_switch_status) 2)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines the directions of the LED effects.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_rgb_direction, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_rgb_direction : std::uint8_t {
     clockwise = 0,
     anti_clockwise
-};
 #else /* defined(__cplusplus) */
-#define benchlab_rgb_direction uint8_t
 #define benchlab_rgb_direction_clockwise ((benchlab_rgb_direction) 0)
 #define benchlab_rgb_direction_anti_clockwise ((benchlab_rgb_direction) 1)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines possible exteded LED status.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_rgb_extended_status, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_rgb_extended_status : std::uint8_t {
     not_detected = 0,
     detected
-};
 #else /* defined(__cplusplus) */
-#define benchlab_rgb_extended_status uint8_t
 #define benchlab_rgb_extended_status_not_detected ((benchlab_rgb_extended_status) 0)
 #define benchlab_rgb_extended_status_detected ((benchlab_rgb_extended_status) 1)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines the LED effects that can be used with the Benchlab device.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_rgb_mode, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_rgb_mode : std::uint8_t {
     rainbow_cycle = 0,
     rainbow_colour_chase,
     rainbow,
@@ -171,9 +198,7 @@ enum class benchlab_rgb_mode : std::uint8_t {
     fade_in_out,
     single_colour_chase,
     single_colour
-};
 #else /* defined(__cplusplus) */
-#define benchlab_rgb_mode uint8_t
 #define benchlab_rgb_mode_rainbow_cycle ((benchlab_rgb_mode) 0)
 #define benchlab_rgb_mode_rainbow_colour_chase ((benchlab_rgb_mode) 1)
 #define benchlab_rgb_mode_rainbow ((benchlab_rgb_mode) 2)
@@ -185,30 +210,34 @@ enum class benchlab_rgb_mode : std::uint8_t {
 #define benchlab_rgb_mode_single_colour_chase ((benchlab_rgb_mode) 8)
 #define benchlab_rgb_mode_single_colour ((benchlab_rgb_mode) 9)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 
+/// <summary>
+/// Defines the LED mode.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_rgb_switch_status, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_rgb_switch_status : std::uint8_t {
     work = 0,
     play
-};
 #else /* defined(__cplusplus) */
-#define benchlab_rgb_switch_status uint8_t
 #define benchlab_rgb_switch_status_work ((benchlab_rgb_switch_status) 0)
 #define benchlab_rgb_switch_status_play ((benchlab_rgb_switch_status) 1)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
+/// <summary>
+/// Defines the temperature sensors on the board.
+/// </summary>
+LIBBENCHLAB_ENUM_BEGIN(benchlab_temperature_source, uint8_t)
 #if defined(__cplusplus)
-enum class benchlab_temperature_source : std::uint8_t {
     automatic = 0,
     sensor1,
     sensor2,
     sensor3,
     sensor4,
     ambient
-};
 #else /* defined(__cplusplus) */
-#define benchlab_temperature_source uint8_t
 #define benchlab_temperature_source_automatic ((benchlab_temperature_source) 0)
 #define benchlab_temperature_source_sensor1 ((benchlab_temperature_source) 1)
 #define benchlab_temperature_source_sensor2 ((benchlab_temperature_source) 2)
@@ -216,6 +245,7 @@ enum class benchlab_temperature_source : std::uint8_t {
 #define benchlab_temperature_source_sensor4 ((benchlab_temperature_source) 4)
 #define benchlab_temperature_source_ambient ((benchlab_temperature_source) 5)
 #endif /* defined(__cplusplus) */
+LIBBENCHLAB_ENUM_END()
 
 //
 //public enum TS_B : byte {
