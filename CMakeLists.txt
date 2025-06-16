@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright © 2024 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+# Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 # Licensed under the MIT licence. See LICENCE file in the project root for detailed information.
 
 cmake_minimum_required(VERSION 3.18.0)
@@ -13,14 +13,15 @@ include(FetchContent)
 #option(BENCHLAB_BuildTests "Build the test driver" OFF)
 option(BENCHLAB_BuildCclient "Build the C-style test client" ON)
 option(BENCHLAB_BuildCppClient "Build the C++ test client" ON)
-#cmake_dependent_option(POWENETICS_BuildExcellentPowenetics "Build the excellent demo programme" ON WIN32 OFF)
+cmake_dependent_option(BENCHLAB_BuildExcellentBenchlab "Build the excellent demo programme" ON WIN32 OFF)
 #cmake_dependent_option(POWENETICS_UseUdev "Use libudev to enumerate serial devices" OFF UNIX OFF)
 
 
-# Windows Implementation Library
+# Windows Implementation Library is required on Windows to discover the Benchlab
+# devices from the registry.
 if (WIN32)
     FetchContent_Declare(wil
-        URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.250325.1.zip"
+        URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.240803.1.zip"
         DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
     option(FAST_BUILD "" OFF)
@@ -40,7 +41,7 @@ if (WIN32)
 endif ()
 
 
-#  Global compiler options, which are derived from the settings above.
+# Global compiler options, which are derived from the settings above.
 add_compile_definitions(UNICODE _UNICODE)
 if (BENCHLAB_BuildTests)
     add_compile_definitions(LIBBENCHLAB_EXPOSE_TO_TESTING)
@@ -78,7 +79,7 @@ if (BENCHLAB_BuildCppClient)
 endif()
 
 
-## Build the demo programme writing to Excel.
-#if (BENCHLAB_BuildExcellentPowenetics)
-#    add_subdirectory(excellentpowenetics)
-#endif ()
+# Build the demo programme writing to Excel.
+if (BENCHLAB_BuildExcellentBenchlab)
+    add_subdirectory(excellentbenchlab)
+endif ()
