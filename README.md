@@ -54,7 +54,7 @@ In C++, a RAII wrapper for device handles can be used like so:
 // Open all available devices.
 std::vector<visus::benchlab::unique_handle> handles;
 {
-    auto hr = visus::benchlab::probe(handles.data(), &cnt);
+    auto hr = visus::benchlab::probe(handles);
     if (FAILED(hr)) { /* Handle the error. */ }
 }
 
@@ -64,6 +64,8 @@ visus::benchlab::unique_handle handle;
     auto hr = visus::benchlab::probe(handle);
     if (FAILED(hr)) { /* Handle the error. */ }
 }
+
+// Handles will be automatically closed if the unique_handle goes out of scope.
 ```
 
 ### Reading sensor data
