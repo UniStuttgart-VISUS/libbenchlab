@@ -98,6 +98,11 @@ void on_sample(_In_ benchlab_handle src,
 /// <param name="argv">The list of command line arguments.</param>
 /// <returns>Zero, unconditionally.</returns>
 int _tmain(int argc, _TCHAR **argv) {
+#if (defined(_WIN32) && (defined(DEBUG) || defined(_DEBUG)))
+    ::_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    //::_CrtSetBreakAlloc(384);
+#endif /* (defined(_WIN32) && (defined(DEBUG) || defined(_DEBUG))) */
+
     visus::benchlab::unique_handle handle;
     HRESULT hr = S_OK;
     auto sensors = visus::benchlab::get_power_sensors();
