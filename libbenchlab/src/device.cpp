@@ -166,7 +166,7 @@ HRESULT benchlab_device::open(_In_z_ const benchlab_char *com_port,
         dcb.Parity = static_cast<BYTE>(config->parity);
         dcb.StopBits = static_cast<BYTE>(config->stop_bits);
 
-        // Like in the .NET framework, mak the handshake stuff to DCB. Cf.
+        // Like in the .NET framework, make the handshake stuff to DCB. Cf.
         // https://github.com/dotnet/runtime/blob/9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3/src/libraries/System.IO.Ports/src/System/IO/Ports/SerialStream.Windows.cs#L191-L235
         const auto rts = (config->handshake
             == benchlab_handshake::request_to_send);

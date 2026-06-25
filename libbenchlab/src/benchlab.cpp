@@ -333,7 +333,8 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
                 cur += req;
             }
 
-            cnt += req;
+            *cnt += req;
+            ::benchlab_close(handle);
         }
     }
 
@@ -344,7 +345,7 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
             *cur = static_cast<benchlab_char>(0);
         }
 
-        *cnt++;
+        ++*cnt;
     }
 
     if (*cnt == 0) {
