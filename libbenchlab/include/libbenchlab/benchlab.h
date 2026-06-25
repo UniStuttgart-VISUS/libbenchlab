@@ -1,5 +1,5 @@
 ﻿// <copyright file="benchlab.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2024 - 2026 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -165,29 +165,23 @@ HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
     _In_opt_ const benchlab_timestamp *timestamp);
 
 /// <summary>
-/// Opens at most <paramref name="cnt" /> Benchlab telemetry devices connected
-/// to the local machine.
+/// Searches the local machine for at most <paramref name="cnt" /> Benchlab
+/// telemetry devices. The paths are returned as a multi-sz string.
 /// </summary>
-/// <param name="out_handles">A buffer to receive at least
-/// <paramref name="cnt" /> handles to devices. The caller is responsible to
-/// close all <paramref name="cnt" /> handles using
-/// <see cref="benchlab_close" /> unless the return value is
-/// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c>, in which case
-/// <paramref name="cnt" /> will report the required buffer size, but nothing
-/// will have been returned.</param>
-/// <param name="cnt">On entry, the number of handles that can be saved to
-/// <paramref name="out_handles" />, on successful exit, the number of handles
+/// <param name="out_ports">A buffer to receive at least
+/// <paramref name="cnt" /> characters.</param>
+/// <param name="cnt">On entry, the number of characters that can be saved to
+/// <paramref name="out_ports" />, on successful exit, the number of characters
 /// that have actually been saved. If the buffer was reported to be too small,
 /// the required size will be returned to this variable.</param>
 /// <returns><c>S_OK</c> in case the operation succeeded,
 /// <c>HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)</c> if there were more
-/// devices than could be stored to <paramref name="out_handles" /> (all
-/// <paramref name="cnt" /> handles that have already been opened must be
-/// closed before trying again), <c>E_NOT_SET</c> if no device at all
+/// devices than could be stored to <paramref name="out_ports" />, 
+/// <c>HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)</c> if no device at all
 /// was found, another error code if establishing the connection to the
 /// device failed.</returns>
 HRESULT LIBBENCHLAB_API benchlab_probe(
-    _Out_writes_opt_(*cnt) benchlab_handle *out_handles,
+    _Out_writes_opt_z_(*cnt) benchlab_char *out_ports,
     _Inout_ size_t *cnt);
 
 /// <summary>
@@ -362,20 +356,25 @@ namespace benchlab {
     /// if no device at all was found, another error code if establishing the
     /// connection to the device failed.</returns>
     inline HRESULT probe(_Inout_ std::vector<unique_handle>& out_handles) {
-        std::vector<benchlab_handle> handles(1);
-        std::size_t cnt = handles.size();
-        
-        auto hr = ::benchlab_probe(handles.data(), &cnt);
+        std::vector<benchlab_char> paths(MAX_PATH + 2);
+        std::size_t cnt = paths.size();
+
+        auto hr = ::benchlab_probe(paths.data(), &cnt);
         if ((hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))) {
-            handles.resize(cnt);
-            hr = ::benchlab_probe(handles.data(), &cnt);
+            paths.resize(cnt);
+            hr = ::benchlab_probe(paths.data(), &cnt);
         }
 
-        out_handles.resize(cnt);
-        std::transform(handles.begin(),
-            handles.end(),
-            out_handles.begin(),
-            [](benchlab_handle handle) { return unique_handle(handle); });
+        auto path = paths.data();
+        while (*path != 0) {
+            out_handles.emplace_back();
+            if (FAILED(open(out_handles.back(), path, nullptr))) {
+                out_handles.pop_back();
+            }
+
+            while (*path++ != 0);
+            ++path;
+        }
 
         return hr;
     }

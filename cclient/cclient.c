@@ -97,35 +97,31 @@ int _tmain(int argc, _TCHAR **argv) {
     // Benchlab device attached to the machine.
     if (SUCCEEDED(hr)) {
         if (argc < 2) {
-            size_t cnt = 1;
-            hr = benchlab_probe(&handle, &cnt);
+            benchlab_char path[MAX_PATH + 2];
+            size_t cnt = sizeof(path) / sizeof(benchlab_char);
+            hr = benchlab_probe(path, &cnt);
 
-            // For the demo, we can live with having only one device, but we
-            // only get anything if we provide a sufficient buffer for *all* the
-            // devices. To do that, we need to allocate temporary memory and
-            // immediately close all handles but the first one.
-            if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
-                benchlab_handle *h = malloc(cnt * sizeof(benchlab_handle));
-                if (h != NULL) {
+            if (SUCCEEDED(hr)) {
+                assert(cnt > 0);
+                hr = benchlab_open(&handle, path, NULL);
+
+            } else if (hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) {
+                benchlab_char *paths = malloc(cnt * sizeof(benchlab_handle));
+                if (paths != NULL) {
                     hr = E_OUTOFMEMORY;
                 }
 
                 if (SUCCEEDED(hr)) {
-                    hr = benchlab_probe(h, &cnt);
+                    hr = benchlab_probe(paths, &cnt);
                 }
 
                 if (SUCCEEDED(hr)) {
                     assert(cnt > 0);
-                    handle = h[0];
-
-                    // Close the handles we do not need.
-                    for (size_t i = 1; i < cnt; ++i) {
-                    benchlab_close(h[i]);
-                    }
+                    hr = benchlab_open(&handle, paths, NULL);
                 }
 
-                if (h != NULL) {
-                    free(h);
+                if (paths != NULL) {
+                    free(paths);
                 }
             }
 

@@ -296,7 +296,7 @@ HRESULT LIBBENCHLAB_API benchlab_readings_to_sample(
  * benchlab_probe
  */
 HRESULT LIBBENCHLAB_API benchlab_probe(
-        _Out_writes_opt_(*cnt) benchlab_handle *out_handles,
+        _Out_writes_opt_z_(*cnt) benchlab_char *out_ports,
         _Inout_ size_t *cnt) {
     if (cnt == nullptr) {
         _benchlab_debug("The size parameter is an invalid pointer.\r\n");
@@ -304,7 +304,7 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
     }
 
     // Ensure that the counter is never valid if the output buffer is invalid.
-    if (out_handles == nullptr) {
+    if (out_ports == nullptr) {
         _benchlab_debug("Forcing an empty buffer.\r\n");
         *cnt = 0;
     }
@@ -318,26 +318,46 @@ HRESULT LIBBENCHLAB_API benchlab_probe(
         }
     }
 
-    // Bail out if we cannot return all devices, but tell the caller how big
-    // the output array must be to hold all devices.
-    if (*cnt < ports.size()) {
-        *cnt = ports.size();
-        _benchlab_debug("Insufficient memory for the Benchlab handles.\r\n");
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-    }
-
     // Open the devices and count how many of it are actually working.
+    auto cur = out_ports;
+    const auto end = out_ports + *cnt;
     *cnt = 0;
     for (std::size_t i = 0; i < ports.size(); ++i) {
-        _Analysis_assume_(out_handles != nullptr);
-        if (SUCCEEDED(::benchlab_open(out_handles + *cnt,
-                ports[i].c_str(),
-                nullptr))) {
-            ++cnt;
+        benchlab_handle handle;
+        if (SUCCEEDED(::benchlab_open(&handle, ports[i].c_str(), nullptr))) {
+            const auto req = ports[i].size() + 1;
+
+            // If we have enough space, copy the string the output buffer.
+            if ((cur + req) < end) {
+                ::memcpy(cur, ports[i].c_str(), req * sizeof(benchlab_char));
+                cur += req;
+            }
+
+            cnt += req;
         }
     }
 
-    return (*cnt > 0) ? S_OK : E_NOT_SET;
+    // If we have any output, make sure that the multi-sz is properly
+    // terminated.
+    if (*cnt > 0) {
+        if (cur < end) {
+            *cur = static_cast<benchlab_char>(0);
+        }
+
+        *cnt++;
+    }
+
+    if (*cnt == 0) {
+        _benchlab_debug("No Benchlab devices found.\r\n");
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+    }
+
+    if (*cnt > (end - out_ports)) {
+        _benchlab_debug("Insufficient memory for the device names.\r\n");
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    }
+
+    return S_OK;
 }
 
 
