@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright © 2024 - 2025 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+# Copyright © 2024 - 2026 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 # Licensed under the MIT licence. See LICENCE file in the project root for detailed information.
 
 cmake_minimum_required(VERSION 3.18.0)
@@ -8,6 +8,7 @@ project(benchlab)
 include(CMakeDependentOption)
 include(FetchContent)
 
+set(CMAKE_CXX_STANDARD 17)
 
 # User-configurable options
 #option(BENCHLAB_BuildTests "Build the test driver" OFF)
@@ -21,23 +22,21 @@ cmake_dependent_option(BENCHLAB_BuildExcellentBenchlab "Build the excellent demo
 # devices from the registry.
 if (WIN32)
     FetchContent_Declare(wil
-        URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.240803.1.zip"
+        URL "https://github.com/microsoft/wil/archive/refs/tags/v1.0.260126.7.zip"
         DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
     option(FAST_BUILD "" OFF)
     option(WIL_BUILD_PACKAGING "" OFF)
     option(WIL_BUILD_TESTS "" OFF)
-    FetchContent_GetProperties(wil)
-    if (NOT wil_POPULATED)
-        FetchContent_Populate(wil)
-        add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif ()
+    FetchContent_MakeAvailable(wil)
     mark_as_advanced(FORCE
         FETCHCONTENT_SOURCE_DIR_WIL
         FETCHCONTENT_UPDATES_DISCONNECTED_WIL
         FAST_BUILD
         WIL_BUILD_PACKAGING
-        WIL_BUILD_TESTS)
+        WIL_BUILD_TESTS
+        WIL_ENABLE_ASAN
+        WIL_ENABLE_UBSAN)
 endif ()
 
 
