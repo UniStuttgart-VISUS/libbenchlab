@@ -11,6 +11,7 @@
 #if defined(__cplusplus)
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -356,7 +357,11 @@ namespace benchlab {
     /// if no device at all was found, another error code if establishing the
     /// connection to the device failed.</returns>
     inline HRESULT probe(_Inout_ std::vector<unique_handle>& out_handles) {
+#if defined(_WIN32)
         std::vector<benchlab_char> paths(MAX_PATH + 2);
+#else /* defined(_WIN32) */
+        std::vector<benchlab_char> paths(PATH_MAX + 2);
+#endif /* defined(_WIN32) */
         std::size_t cnt = paths.size();
 
         auto hr = ::benchlab_probe(paths.data(), &cnt);
